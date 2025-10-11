@@ -29,14 +29,13 @@ from search.agents import (
     robot_agent
 )
 from search.agents.server_communication import read_line
-from search.domain.actions import DEFAULT_HOSPITAL_ACTION_LIBRARY
+from search.domain.actions import DEFAULT_HOSPITAL_ACTION_LIBRARY, ROBOT_ACTION_LIBRARY
 from search.domain import (
     Level,
     AdvancedHeuristic,
     GoalCountHeuristic,
 )
 from search.frontiers import BFSFrontier, DFSFrontier, AStarFrontier, GreedyFrontier
-from robot.robot_client import RobotClient
 
 
 def load_level_file_from_server():
@@ -76,7 +75,7 @@ def create_parser():
     # Action library selection
     parser.add_argument(
         "--action-library",
-        choices=["default"],
+        choices=["default", "robot"],
         default="default",
         help="Select the action library. Default is 'default'.",
     )
@@ -143,7 +142,13 @@ def create_parser():
         help="Use a non-deterministic agent using AND-OR graph search",
         parents=[and_or_graph_search_parent]
     )
-
+    nondet_parser.add_argument(
+        "--results",
+        choices=["broken"],
+        default="broken",
+        help="Select the results condition. Default is 'broken'"
+    )
+    
     # Goal recognition agent subcommand
     goalrec_parser = subparsers.add_parser(
         "goalrecognition",
@@ -172,7 +177,6 @@ def main():
     if args.debug:
         debugpy.listen(("localhost", 1234))
         debugpy.wait_for_client()
-        debugpy.breakpoint()
     
     # Set memory tracker (same as before)
     max_memory_match = re.match(r"([0-9]+)g", args.max_memory)
@@ -212,6 +216,8 @@ def main():
     if action_library_name is None\
             or action_library_name == "default":
         action_library = DEFAULT_HOSPITAL_ACTION_LIBRARY
+    elif action_library_name == "robot":
+        action_library = ROBOT_ACTION_LIBRARY
 
     # Construct the requested heuristic
     heuristic = None
@@ -241,7 +247,8 @@ def main():
     
     # Prepare agent arguments
     enable_iterative_deepening = not getattr(args, "no_iterative_deepening", False)
-    allow_cyclic = getattr(args, "cyclic", True)
+    allow_cyclic = getattr(args, "cyclic", False)
+    results_function_key = str(getattr(args, "results", "broken"))
 
     # Run the requested agent type
     if (agent_type_name := getattr(args, "agent_type")) == "classic":
@@ -251,7 +258,7 @@ def main():
     elif agent_type_name == "helper":
         helper_agent(level, action_library, frontier)
     elif agent_type_name == "nondeterministic":
-        non_deterministic_agent(level, action_library, enable_iterative_deepening)
+        non_deterministic_agent(level, action_library, enable_iterative_deepening, allow_cyclic, results_function_key)
     elif agent_type_name == "goalrecognition":
         goal_recognition_agent(level, action_library, frontier, enable_iterative_deepening, allow_cyclic)
     elif agent_type_name == "robot":

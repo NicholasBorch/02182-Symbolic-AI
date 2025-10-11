@@ -72,8 +72,6 @@ class GoalRecognitionNode:
             joint_action[HELPER_AGENT_INDEX] for joint_action in applicable_joint_actions
         ]
         return applicable_actions
-    
-
 
     def result(self, joint_action: JointAction) -> GoalRecognitionNode:
         # The result method should return a new GoalRecognitionNode which contains the resulting state and the
@@ -114,7 +112,7 @@ def goal_recognition_agent(
     allow_cyclic: bool = False,
 ):
     """
-    
+
     """
     # Get the initial state and goal description from the level
     initial_state = level.initial_state()
@@ -125,4 +123,3 @@ def goal_recognition_agent(
     # Note: Similarly to the non deterministic agent type, this is not a fast algorithm and you should therefore start
     # by testing on very small levels, such as those found in the assignment.
     raise NotImplementedError()
-

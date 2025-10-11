@@ -16,6 +16,7 @@ from search import print_debug
 from search.domain import Level, State, Action, JointAction
 from search.algorithms.and_or_graph_search import and_or_graph_search
 from search.agents.server_communication import send_joint_action, joint_action_to_string
+from search.domain.actions import Move
 
 
 def broken_results(state: State, action: JointAction) -> list[State]:
@@ -28,9 +29,12 @@ def broken_results(state: State, action: JointAction) -> list[State]:
         return [standard_case, broken_case]
     else:
         return [standard_case]
+    
+results_functions = {
+    "broken": broken_results,
+}
 
-
-CHANCE_OF_EXTRA_ACTION = 0.5
+CHANCE_OF_BROKEN = 0.5
 
 
 def non_deterministic_agent(
@@ -38,6 +42,7 @@ def non_deterministic_agent(
     action_library: list[Action],
     iterative_deepening: bool = True,
     allow_cyclic: bool = False,
+    results_function_key: str = "broken",
 ):
     """
 
@@ -48,17 +53,20 @@ def non_deterministic_agent(
 
     # Create an action set for a single agent.
     action_set = [action_library]
+    
+    # Get the results function
+    if results_function_key not in results_functions:
+        raise ValueError(f"Invalid results function: {results_function_key}")
+    results_function = results_functions[results_function_key]
 
     # Call AND-OR-GRAPH-SEARCH to compute a conditional plan
     worst_case_length, plan = and_or_graph_search(
-        initial_state, action_set, goal_description.is_goal, broken_results, iterative_deepening, allow_cyclic
+        initial_state, action_set, goal_description.is_goal, results_function, iterative_deepening, allow_cyclic
     )
 
     if worst_case_length is None or plan is None:
         print_debug("Failed to find strong plan!")
         return
-
-    print_debug("Found plan of worst-case length", worst_case_length)
 
     current_state = initial_state
 
@@ -77,18 +85,20 @@ def non_deterministic_agent(
         # Otherwise, read the correct action to execute
         joint_action = plan[current_state]
 
-        # Send the joint action to the server (also print it for help)
-        print_debug(joint_action_to_string(joint_action))
-        _ = send_joint_action(joint_action)
-        current_state = current_state.result(joint_action)
-
-        # Broken executor in-determinism: After performing action, roll dice to check whether
-        # action will be executed twice (only if it is still applicable)
-        is_broken = random.random() < CHANCE_OF_EXTRA_ACTION
-        is_applicable = current_state.is_applicable(joint_action)
-        if is_broken and is_applicable:
-            print_debug(
-                f"Oops! Extra {joint_action_to_string(joint_action)}",
-            )
+        if results_function == broken_results:
+            # Send the joint action to the server (also print it for help)
+            print_debug(joint_action_to_string(joint_action))
             _ = send_joint_action(joint_action)
             current_state = current_state.result(joint_action)
+
+            # Broken executor in-determinism: After performing action, roll dice to check whether
+            # action will be executed twice (only if it is still applicable)
+            is_broken = random.random() < CHANCE_OF_BROKEN
+            is_applicable = current_state.is_applicable(joint_action)
+            if is_broken and is_applicable:
+                print_debug(
+                    f"Oops! Extra {joint_action_to_string(joint_action)}",
+                )
+                _ = send_joint_action(joint_action)
+                current_state = current_state.result(joint_action)
+        

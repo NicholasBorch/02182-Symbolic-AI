@@ -213,7 +213,7 @@ class RobotClient:
             If true, the robot will wait until the motion is completed before continuing with the next command.
             If false, the robot will continue immediately. 
         """
-        if block == False:
+        if not block:
             Thread(target=(lambda: self.motion.moveTo(distance, 0, 0))).start()
         else:
             self.motion.moveTo(distance, 0, 0)

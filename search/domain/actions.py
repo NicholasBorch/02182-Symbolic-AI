@@ -150,7 +150,7 @@ class Push(Action):
         self.box_delta = direction_deltas[box_direction]
         self.name = f"Push({agent_direction},{box_direction})"
 
-    def calculate_positions(self, current_agent_position: Position):
+    def calculate_positions(self, current_agent_position: Position) -> tuple[Position, Position]:
         new_agent_position = current_agent_position + self.agent_delta
         new_box_position = new_agent_position + self.box_delta
         return new_agent_position, new_box_position
@@ -192,7 +192,7 @@ class Pull(Action):
         self.box_delta = direction_deltas[box_direction]
         self.name = f"Pull({agent_direction},{box_direction})"
 
-    def calculate_positions(self, current_agent_position: Position):
+    def calculate_positions(self, current_agent_position: Position) -> tuple[Position, Position]:
         current_box_position = current_agent_position - self.box_delta
         new_agent_position = current_agent_position + self.agent_delta
         return current_box_position, new_agent_position
@@ -275,3 +275,16 @@ DEFAULT_HOSPITAL_ACTION_LIBRARY: ActionLibrary = [
 ]
 """Default action library for the hospital domain."""
 
+ROBOT_ACTION_LIBRARY: ActionLibrary = [
+    NoOp(),
+    
+    Move("N"),
+    Move("S"),
+    Move("E"),
+    Move("W"),
+    
+    Push("N", "N"),
+    Push("S", "S"),
+    Push("E", "E"),
+    Push("W", "W"),
+]

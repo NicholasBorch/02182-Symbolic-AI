@@ -10,8 +10,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable
-
+from __future__ import annotations
+from typing import Callable, TYPE_CHECKING
+if TYPE_CHECKING:
+    from search.agents.goal_recognition import GoalRecognitionNode
+    
 from search.domain import State
 from search.domain.actions import ActionSet, JointAction
 from search import print_debug
@@ -24,7 +27,7 @@ type ResultsFunction[S] = Callable[[S, JointAction], list[S]]
 MAX_RECURSION = 496
 
 def and_or_graph_search(
-    initial_state: State,
+    initial_state: State|GoalRecognitionNode,
     action_set: ActionSet,
     goal_test: Callable[[State], bool],
     results: ResultsFunction,

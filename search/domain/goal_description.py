@@ -70,6 +70,17 @@ class GoalDescription:
 
         return GoalDescription(self.level, filtered_goals)
 
+    def add_sub_goal(self, goal: Goal) -> None:
+        """
+        This function adds a sub goal to the goal description.
+        It is used when creating new goal descriptions from existing ones
+        """
+        self.goals.append(goal)
+        if goal[1].isdigit():
+            self.agent_goals.append(goal)
+        elif goal[1].isalpha():
+            self.box_goals.append(goal)
+    
     def get_sub_goal(self, goal_index: int) -> GoalDescription:
         """
         This function allow each sub goal to be considered one at a time.

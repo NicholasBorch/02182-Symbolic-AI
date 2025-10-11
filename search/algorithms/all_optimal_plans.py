@@ -17,7 +17,7 @@ from collections import deque
 
 from search.domain.goal_description import GoalDescription
 from search.domain import State
-from search.domain.actions import Action, ActionSet
+from search.domain.actions import Action, ActionLibrary, ActionSet
 from search.frontiers.frontier import Frontier
 from search.algorithms.monitoring import memory_tracker, search_timer, print_search_status
 
@@ -131,8 +131,8 @@ def visualize_solution_graph(solution_graph: MultiParentNode, filename: str = "a
 
 def all_optimal_plans(
     initial_state: State,
-    action_set: list[Action],
-    possible_goals: GoalDescription,
+    action_set: list[ActionLibrary],
+    possible_goals: list[GoalDescription],
     frontier: Frontier[MultiParentNode],
     visualize: bool = False,
 ) -> tuple[bool, MultiParentNode|None]:
@@ -163,7 +163,10 @@ def all_optimal_plans(
     root = MultiParentNode(initial_state)
 
     frontier.add(root)
-    generated_states: dict[MultiParentNode, MultiParentNode] = {}
 
     # Your implementation of ALL-OPTIMAL-PLANS goes here...
     raise NotImplementedError()
+    if visualize:
+        visualize_solution_graph(root)
+        
+    return True, root

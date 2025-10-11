@@ -27,7 +27,7 @@ def helper_agent(
     frontier: Frontier,
 ):
     """
-    
+
     """
     # Get the initial state and goal description from the level
     initial_state = level.initial_state()

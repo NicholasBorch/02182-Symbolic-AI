@@ -2,7 +2,8 @@
 
 This repository contains content for the MAvis assignments of the DTU course: Symbolic artificial intelligence - 02182, and is considered DTU property.
 
-This README includes guides for setting up your own private downstream repository, installing the requirements, how to use the client and server, how to interface with the Pepper robots.
+This README includes guides for setting up your own private downstream repository, installing the requirements, and how to use the client and server.
+For information on how to interface with the Pepper robots see the [Robot guide](docs/robot_guide.md).
 
 ## Table of contents
 - [Table of contents](#table-of-contents)
@@ -10,26 +11,13 @@ This README includes guides for setting up your own private downstream repositor
 - [Requirements](#requirements)
 - [Devcontainer](#devcontainer)
   - [Setup](#setup)
-  - [Tips \& Troubleshooting](#tips--troubleshooting)
-    - [Selecting python interpreter](#selecting-python-interpreter)
   - [Adding pip packages](#adding-pip-packages)
   - [(noVNC) changing the resolution of the virtual environment](#novnc-changing-the-resolution-of-the-virtual-environment)
-  - [X11 Problems](#x11-problems)
-- [Client](#client)
+- [Usage](#usage)
   - [Agent types](#agent-types)
   - [Debugging](#debugging)
   - [Memory settings](#memory-settings)
 - [Interactive documentation](#interactive-documentation)
-- [Pepper robot guide](#pepper-robot-guide)
-  - [Connecting to the Pepper network](#connecting-to-the-pepper-network)
-  - [Turning on Pepper](#turning-on-pepper)
-  - [Getting Pepper IP address](#getting-pepper-ip-address)
-  - [Connecting to Pepper](#connecting-to-pepper)
-  - [Putting Pepper to sleep/hibernate](#putting-pepper-to-sleephibernate)
-  - [Turning Pepper off](#turning-pepper-off)
-  - [Localization](#localization)
-  - [Whisper Speech Recognition](#whisper-speech-recognition)
-  - [Adding new functionality](#adding-new-functionality)
 
 
 ## Private repository setup
@@ -61,19 +49,17 @@ git push origin main
 ```
 
 ## Requirements
-To simplify the installation of the requirements for this repo a [Devcontainer](#devcontainer) has been produces, which creates a virtual development environment with all the necessary requirements 
+To simplify the installation of the requirements for this repo a [Devcontainer](#devcontainer) has been produces, which creates a virtual development environment with all the necessary requirements.   
 However if you want to install the dependencies locally the following section outlines what is required.
 
 ---
+**IMPORTANT** to interact with the robots used in this course the [libqi](https://github.com/aldebaran/libqi) library is used. `libqi` has a python wrapper [qi](https://pypi.org/project/qi/) which is **only available for unix based systems**. We therefore strongly discourage windows users from taking this path.
 
 To complete assignments, it is required that you can execute Java programs compiled for the most recent Java release. 
-You should therefore make sure to have an updated version of a Java Development Kit (JDK) installed before the continuing. 
+You should therefore make sure to have an updated version of a Java Development Kit (JDK) installed before continuing. 
 Both Oracle JDK and OpenJDK will do. Additionally, you should make sure your PATH variable is configured 
-so that `java` is available in your command-line interface (command prompt/terminal). Run 
-```shell
-java -version
-```
-from the command line to check which version your path is set up to use. It should be the version you just installed.  
+so that `java` is available in your command-line interface (command prompt/terminal).  
+Run `java -version` from the command line to check which version your path is set up to use. It should be the version you just installed.  
 
 The Python client has been tested with Python 3.12, but should work with versions of Python above 3.10.
 The client requires the pip packages outlined in the [Devcontainer](#devcontainer) section.
@@ -83,20 +69,22 @@ To simplify the setup and installation of required dependencies, a [devcontainer
 
 The environment comes preconfigured with:
 - **Java (OpenJDK 17)** – Access via `java`
-- **Python 3.12** (for the client) – Access via `python3` - with the following pip dependencies, specified in [requirements.txt](.devcontainer/requirements.txt)
-    - `psutil` to monitor its memory usage.
+- **Python 3.12** – Access via `python3` - with the following pip dependencies
+    - `psutil` to monitor client memory usage.
     - `debugpy` required to allow debugging through the java server
     - `numpy` to facilitate communication between the robot and the client
     - `scp` to transfer data (images & audio) to and from the robots
     - `qi` the Pepper SDK used to facilitate the communication with the robot
         - **Note** that this package is only available for Unix-based systems (MacOS & Linux)
-    - `openai-whisper` to transcribe audio recordings, allowing verbal communication between user and robot.
+    - `faster-whisper` to transcribe audio recordings, allowing verbal communication between user and robot.
     - Non-required packages:
         - `opencv-python` intended for manipulating image data from the robots
         - `pupil-apriltags` required to process apriltags
         - `graphviz` required to visualize solution graphs
         - `pdoc` required to run the [docs.py](docs.py) interactive code documentation
-- **Graphviz** for visualizing solution graphs - Accessed through the python package.
+- **Graphviz** - For visualizing solution graphs. Accessed through the python package.
+- **NoVNC**  - Some systems cannot efficiently forward and visualize the server graphics natively. As a workaround [noVNC](https://novnc.com/info.html) have been used to forward the graphics via a webserver.    
+To see the virtual GUI environment, open [localhost:8080/vnc.html](http://localhost:8080/vnc.html) and press connect.  
 
 ### Setup
 To setup the devcontainer the following **prerequisites** need to be installed:
@@ -108,22 +96,18 @@ To setup the devcontainer the following **prerequisites** need to be installed:
 
 With the prerequisites installed, follow these steps:
 1. Open your repository in vscode
-2. **IF EXPERIENCING X11 PROBLEMS:** Replace the natively x11 supporting configuration with the noVNC configuration in [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)
-2. Open the vscode command palette (`ctrl+shift+p` or `cmd+shift+p`)
+2. Open the vscode command palette (`ctrl/cmd+shift+p`)
 3. Run the `Dev Containers: Rebuild and Reopen in Container` command
     - The first build may take a while - check the logs to track progress.
     - Once your files appear in the Explorer (left panel), the devcontainer is ready.
-
-**IF EXPERIENCING X11 PROBLEMS:** Some systems cannot efficiently run the server graphics natively. As a workaround [noVNC](https://novnc.com/info.html) have been used to forward the graphics via a webserver.    
-To see the virtual GUI environment, open [localhost:8080/vnc.html](http://localhost:8080/vnc.html) and press connect.  
-
-### Tips & Troubleshooting
-#### Selecting python interpreter
-As the client and the server uses different python versions, selecting the version you intend to use to run the code provides accurate [IntelliSense](https://code.visualstudio.com/docs/editor/intellisense), and ensures the right version is used if running it directly from vscode (`F5`).  
-**Steps:**
-1. Open the vscode command palette (`ctrl+shift+p` or `cmd+shift+p`)
-2. Run the `Python: Select Interpreter` command
-3. Select the appropriate python version
+4. Check the setup
+    1. Open the virtual GUI environment: [localhost:8080/vnc.html](http://localhost:8080/vnc.html) and press connect
+    2. Execute the following command in the devcontainers terminal:  
+        ```shell
+        java -jar server.jar -g -s 300 -t 180 -c "python3 client.py classic" -l levels/SAD1.lvl
+        ```
+    3. If no errors occur and the desktop environment is visualized, the environment is working as intended.
+    4. To close the server, cancel the command in the terminal (`ctrl/cmd+c` or `ctrl/cmd+z`)
 
 ### Adding pip packages
 To ensure packages are installed when building or rebuilding the devcontainer, add wanted pip packages to the [.devcontainer/requirements.students.txt](.devcontainer/requirements.students.txt) file and rebuild the container (vscode command `Dev Containers: Rebuild Container`).
@@ -135,14 +119,7 @@ To ensure packages are installed when building or rebuilding the devcontainer, a
     1. Open the vscode command palette (`ctrl+shift+p` or `cmd+shift+p`)
     2. Run the `Dev Containers: Rebuild Container` command
 
-### X11 Problems
-1. Follow the noVNC setup steps, updating the [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json)
-2. Rebuild the devcontainer
-    1. Open the vscode command palette (`ctrl+shift+p` or `cmd+shift+p`)
-    2. Run the `Dev Containers: Rebuild Container` command
-3. Access the GUI at [localhost:8080/vnc.html](http://localhost:8080/vnc.html)
-
-## Client
+## Usage
 All the following commands assume the working directory is the one this README is located in.
 
 You can read about the server options using the -h argument:
@@ -202,6 +179,7 @@ For more advanced debugging using vscode and the devcontainer, simply add the `-
 ```shell
 java -jar server.jar -g -c "python3 client.py --debug classic" -l levels/SAD1.lvl
 ```
+then attach to the debugging server named `MAvis` in the vscode debug tab.  
 **Note that the server will still timeout if the `-t` argument is given.**
 
 ### Memory settings
@@ -220,84 +198,5 @@ To host an interactive and searchable documentation of the code using its docstr
 ```shell
 python3 doc.py
 ```
-This should host a webserver accessible via `http://localhost:8080` (port can be changed in `doc.py`).
+This should host a webserver accessible via http://localhost:8080 (port can be changed in [docs.py](docs.py)).
 
-## Pepper robot guide
-### Connecting to the Pepper network
-1. Ensure the network router has been plugged in. Ask a teacher or TA if in doubt.
-2. Connect your laptop to the `Pepper` WiFi
-    - SSID: **Pepper**
-    - Password: **60169283**
-
-### Turning on Pepper
-1. Ensure the network router has been plugged in. Ask a teacher or TA if in doubt.
-2. Press the start button on the stomach behind the tablet once quickly.
-3. Light should come on in both eyes and shoulders.
-
-### Getting Pepper IP address
-1. Ensure Pepper is on and standing straight up
-2. Press the button on the stomach behind the tablet once quickly
-3. Pepper should say its IP address out loud.
-
-### Connecting to Pepper
-1. Ensure your laptop is connected to the `Pepper` network
-2. Use either the [robot/robot_client.py](robot/robot_client.py) or [client.py](client.py) to test the connection. Examples:
-    - [robot/robot_client.py](robot/robot_client.py): `python3 robot/robot_client.py INSERT_PEPPER_IP`
-    - [client.py](client.py): `java -jar server.jar -g -s 300 -c "python3 client.py robot --ip INSERT_PEPPER_IP" -l levels/MAsimplegoalrecognition.lvl`
-
-**Troubleshooting:**  
-- Running into the exception: **Robot's IP not in configuration file, please update the configuration file with the correct robot IP.**
-    - It happens that the robots change IP, when this happens, update the IP of your robot in  [robot_config.json](robot/robot_config.json) based on the robots ID.
-
-### Putting Pepper to sleep/hibernate
-1. Press the button on the stomach behind the tablet **twice quickly**.
-2. Pepper should transition to its safe sleeping pose, cooling the motors and saving power.
-
-### Turning Pepper off
-1. Press and hold the the button on the stomach behind the tablet, till Pepper says *"Gnuk Gnuk"*.
-2. Pepper should now go into the sleeping position and turn off all lights.
-
-### Localization
-You may observe that the robot's navigational accuracy as slightly lacking. It's also very sensitive to its starting position within the cells. These inaccuracies can accumulate and potentially cause frustration. By utilizing the [robot/robot_utils.py::VisionStreamThread](robot/robot_utils.py) class you can obtain data on the nearest apriltag visible to the robot (specifically via the camera located below the mouth). This information can be used to implement a basic controller by completing the `localization_controller(video_thread: VideoStreamThread)` method in the [robot/robot_client.py::RobotClient](robot/robot_client.py) class.  
-Remember that `localization_controller(video_thread: VideoStreamThread)` must utilize an active `VisionStreamThread` as a parameter, which you can assign by using the `instantiate_vision_processes` function (refer to the
-\_\_main\_\_ script in [robot/robot_client.py](robot/robot_client.py) for further details).  
-
-A solution might be to develop a controller that begins by aligning the robot to the closest apriltag, followed by ensuring the correct orientation through a continual loop (you may need to specify an epsilon for both centering and orientation to help determine completion). Immediately after every $n$ actions in the action plan, you can call the controller to help mitigate the cumulative error. One thing you may discover is that certain actions cause more substantial errors than others. This could be an important factor to consider when deciding the point to activate the controller during the execution of a plan.
-
-### Whisper Speech Recognition
-We'll use OpenAI's Whisper for speech recognition because it works well in noisy situations.  
-To set up Whisper, follow the guide here (read carefully): https://github.com/openai/whisper  
-Although Whisper handles noise well, stand near your robot when talking. The first time you use Whisper, loading the base model may take a while. This only happens once per session.   
-Here's a code example from the demo that transcribes a temporary `test.wav` file in the `tmp` folder (this is where the robot.listen() function from [robot/robot_client.py](robot/robot_client.py) will save to):
-```python
-# %% Imports
-import whisper
-
-# %% Transcription helper
-def transcribe(audio_file: str, model: whisper.Whisper, language: str = "en") -> str:
-    audio = whisper.load_audio(audio_file)
-    audio = whisper.pad_or_trim(audio)
-
-    result = whisper.transcribe(model, audio, fp16 = False, language=language)
-    return result['text']
-
-# %% Load model
-# The list of available models can be found here: https://github.com/openai/whisper
-model = whisper.load_model(
-    name="small.en",
-    download_root="tmp/whisper_models" # Ensures model weights are kept between container rebuilds
-)
-
-# %% Record audio
-robot.listen(5)
-
-# %% Transcribe audio file
-audio_file = "tmp/test.wav"
-transcription = transcribe(audio_file, model)
-transcription
-```
-
-### Adding new functionality
-If you'd like to try new things and add more features to the robot client, go ahead. You can find the complete NAOqi API proxies here: http://doc.aldebaran.com/2-5/naoqi/index.html.  
-You can also include other features not in the API. To do this easily, follow the general procedure in [robot/robot_client.py](robot/robot_client.py).  
-If you have interesting ideas, but are unsure if they can work, ask the Robot TA for help.

@@ -1,21 +1,17 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/python
 {
-	"name": "02182-devcontainer",
+	"name": "02182-devcontainer",	
 
-	// FOR NATIVELY SUPPORTING X11 FORWARDING SYSTEMS
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
-	"workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/mavis_client,type=bind,consistency=cached",
-	// END NATIVELY SUPPORTING X11 FORWARDING SYSTEMS
+	"dockerComposeFile": "docker-compose.yml",
+	// Must match the service name given the devcontainer
+	// in the docker-compose.yml file.
+	"service": "02182-devcontainer",
 	
-	// noVNC SETUP
-	// "dockerComposeFile": "docker-compose.yml",
-	// "service": "02182-devcontainer",
-	// END noVNC SETUP
-	
+	// Runs after the container is created and started.
 	"postCreateCommand": "bash .devcontainer/post_create_setup.sh",
+	// Specifies the path where the workspace/code will be mounted inside the container.
+	// Must match the volume path in the docker-compose.yml file.
 	"workspaceFolder": "/workspaces/mavis_client",
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
