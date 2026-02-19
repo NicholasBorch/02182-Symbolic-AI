@@ -119,21 +119,17 @@ class BestFirstFrontier[T](Frontier[T]):
         super().__init__()
         self.heuristic = heuristic
         self.goal_description = None
-        # Your code here...
-        raise NotImplementedError()
+        self.priority_queue = PriorityQueue[T]()
 
     def _add(self, element: T):
-        # Your code here...
-        raise NotImplementedError()
+        self.priority_queue.add(element, self.f(element))
 
     def _pop(self) -> T:
-        # Your code here...
-        raise NotImplementedError()
+        return self.priority_queue.pop()
 
     def _clear(self) -> None:
-        # Your code here...
-        raise NotImplementedError()
-
+        self.priority_queue.clear()
+        
     def f(self, element: T) -> int:
         raise NotImplementedError(
             "BestFirstFrontier should not be directly used. Instead use a subclass overriding f()"
@@ -147,8 +143,7 @@ class AStarFrontier[T](BestFirstFrontier[T]):
         assert (
             self.goal_description is not None
         ), "Cannot evaluate heuristic without goal description!"
-        # Your code here...
-        raise NotImplementedError()
+        return element.path_cost + self.heuristic.h(element.state, self.goal_description)
 
 
 class GreedyFrontier[T](BestFirstFrontier[T]):
@@ -156,5 +151,4 @@ class GreedyFrontier[T](BestFirstFrontier[T]):
         assert (
             self.goal_description is not None
         ), "Cannot evaluate heuristic without goal description!"
-        # Your code here...
-        raise NotImplementedError()
+        return self.heuristic.h(element.state, self.goal_description)
