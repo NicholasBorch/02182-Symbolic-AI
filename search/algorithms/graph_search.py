@@ -81,19 +81,25 @@ def graph_search(
 
     root = Node(initial_state)
 
-    return_fixed_solution = True
+    return_fixed_solution = False
     
     if return_fixed_solution:
         return True, [
-            [Move("S")],
+            # [Move("S")],
             [Move("E")],
-            [Move("S")],
             [Move("E")],
-            [Move("N")],
-            [Move("N")],
-            [Move("W")],
-            [Move("W")],
+            [Move("E")],
+            [Move("E")],
+            # [Move("E")],
+            # [Move("E")],
+            # [Move("E")],
+            # [Move("E")],
+            # [Move("E")],
+            # [Move("E")],
+            # [Move("S")],
+            # [Move("S")],
         ]
+    
     frontier.add(root)
     expanded: set[State] = set()
 
@@ -108,7 +114,23 @@ def graph_search(
 
         iterations += 1
 
-        # Your code here...
-        raise NotImplementedError()
+        if frontier.is_empty(): 
+            return False, []
+        
+        node = frontier.pop()
+        
+        if goal_description.is_goal(node.state):
+            return True, node.extract_plan()
+        
+        expanded.add(node.state)
+        applicable_actions = node.get_applicable_actions(action_set)
+        
+        for action in applicable_actions:
+            child = node.result(action)
+            
+            if child not in frontier and child.state not in expanded:
+                frontier.add(child)        
+
+        
 
 
