@@ -40,7 +40,21 @@ class GoalCountHeuristic:
 
     def h(self, state: State, goal_description: GoalDescription) -> int:
         # Your code goes here...
-        return 0
+        # Count unsatisfied agent goal literals
+        #import sys
+        #print("State:", state.agent_positions, file=sys.stderr, flush=True)
+        
+        count = 0
+        for pos, char, is_positive in goal_description.agent_goals:
+            _, obj = state.object_at(pos)
+            if is_positive:
+                if obj != char:
+                    count += 1
+            else:
+                if obj == char:
+                    count += 1
+        #print("Count:", count, file=sys.stderr, flush=True)
+        return count
 
 
 class AdvancedHeuristic:
