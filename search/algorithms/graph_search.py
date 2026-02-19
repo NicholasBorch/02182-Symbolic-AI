@@ -85,19 +85,20 @@ def graph_search(
     
     if return_fixed_solution:
         return True, [
-            # [Move("S")],
+            [Move("S")],
+            [Move("S")],
             [Move("E")],
             [Move("E")],
             [Move("E")],
             [Move("E")],
-            # [Move("E")],
-            # [Move("E")],
-            # [Move("E")],
-            # [Move("E")],
-            # [Move("E")],
-            # [Move("E")],
-            # [Move("S")],
-            # [Move("S")],
+            [Move("E")],
+            [Move("E")],
+            [Move("E")],
+            [Move("E")],
+            [Move("E")],
+            [Move("E")],
+            [Move("S")],
+            [Move("S")],
         ]
     
     frontier.add(root)
