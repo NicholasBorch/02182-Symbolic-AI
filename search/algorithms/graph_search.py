@@ -115,17 +115,19 @@ def graph_search(
 
         iterations += 1
 
-        if frontier.is_empty(): 
+        if frontier.is_empty():
+            print("States generated:",len(expanded) + len(frontier))
             return False, []
         
         node = frontier.pop()
         
         if goal_description.is_goal(node.state):
+            print("States generated:",len(expanded) + len(frontier))
             return True, node.extract_plan()
         
         expanded.add(node.state)
         applicable_actions = node.get_applicable_actions(action_set)
-        
+
         for action in applicable_actions:
             child = node.result(action)
             
