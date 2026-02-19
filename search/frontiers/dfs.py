@@ -20,17 +20,13 @@ class DFSFrontier[T](Frontier[T]):
 
     def __init__(self):
         super().__init__()
-        # Your code here...
-        raise NotImplementedError()
+        self.stack = []
 
     def _add(self, state: T):
-        # Your code here...
-        raise NotImplementedError()
+        self.stack.append(state)
 
     def _pop(self):
-        # Your code here...
-        raise NotImplementedError()
+        return self.stack.pop()
 
     def _clear(self):
-        # Your code here...
-        raise NotImplementedError()
+        self.stack.clear()
