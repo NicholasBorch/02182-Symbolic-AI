@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import itertools
+import numpy as np
 from typing import Protocol
 
 from search.domain.goal_description import GoalDescription
@@ -59,14 +60,55 @@ class GoalCountHeuristic:
 
 class AdvancedHeuristic:
     def __init__(self):
-        raise NotImplementedError("Implement initialization")
+        self.distance_map : dict[str, dict[Position, int]] = {}
+        # raise NotImplementedError("Implement initialization")
 
     def preprocess(self, level: Level):
         # This function will be called a single time prior to the search allowing us to preprocess the level such as
-        # pre-computing lookup tables or other acceleration structures
-        raise NotImplementedError("Implement preprocessing logic")
+        # pre-computing l$ookup tables or other acceleration structures
+        """
+        level.walls is a 2D list of walls and open spaces. Coordinates are in (row, column), and not counting the walls
+        Grid example:
+        (Wall) (Wall) (Wall) (Wall) (Wall)
+        (Wall) (1, 1) (1, 2) (1, 3) (Wall)
+        (Wall) (2, 1) (2, 2) (2, 3) (Wall)
+        (Wall) (3, 1) (3, 2) (3, 3) (Wall)
+        (Wall) (Wall) (Wall) (Wall) (Wall)
+        """
+        # Create grid and remove the walls
+        grid = np.array(level.walls) 
+        borderless_rows, border_less_columns = grid[1:-1, 1:-1].shape
+        
+        game_grid = {}
+        for row in range(1, borderless_rows+1):
+            for columns in range(1, border_less_columns+1):
+                game_grid[(row, columns)] = "wall"
+                                
+        goal_positions = {}
+        for position, agent, _ in level.agent_goals:
+            goal_positions[agent] = position
+            self.distance_map[agent] = {}
+        
+        for agent in goal_positions.keys():   
+            for coordinate in game_grid.keys():
+                distance = self._manhatten_distance(coordinate, goal_positions[agent])
+                self.distance_map[agent][coordinate] = distance
 
 
     def h(self, state: State, goal_description: GoalDescription) -> int:
-        # Your heuristic goes here...
-        raise NotImplementedError("Implement heuristic")
+        agent_positions : dict[str, Position] = {}
+        for position, agent in state.agent_positions:
+            agent_positions[agent] = position
+        
+        total_distance = 0
+        for agent, position in agent_positions.items():
+            if agent not in self.distance_map:
+                continue
+            total_distance += self.distance_map[agent][position]
+        
+        return total_distance
+
+
+    def _manhatten_distance(self, agent_position: Position, goal_position: Position) -> int:
+        """Computes the manhatten distance between the agent and the goal"""
+        return abs(agent_position[0] - goal_position[0]) + abs(agent_position[1] - goal_position[1])
