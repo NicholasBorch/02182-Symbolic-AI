@@ -41,22 +41,35 @@ class GoalCountHeuristic:
         # pre-computing lookup tables or other acceleration structures
         pass
 
+    
     def h(self, state: State, goal_description: GoalDescription) -> int:
-        # Your code goes here...
-        # Count unsatisfied agent goal literals
-        #import sys
-        #print("State:", state.agent_positions, file=sys.stderr, flush=True)
-        
+        USE_BOX_GOALS = True   # <-- Toggle here (True = boxes, False = agents)
+
         count = 0
-        for pos, char, is_positive in goal_description.agent_goals:
-            _, obj = state.object_at(pos)
-            if is_positive:
-                if obj != char:
-                    count += 1
-            else:
-                if obj == char:
-                    count += 1
-        #print("Count:", count, file=sys.stderr, flush=True)
+
+        if USE_BOX_GOALS:
+            # Count unsatisfied BOX goal literals
+            for pos, char, is_positive in goal_description.box_goals:
+                _, obj = state.object_at(pos)
+
+                if is_positive:
+                    if obj != char:
+                        count += 1
+                else:
+                    if obj == char:
+                        count += 1
+        else:
+            # Count unsatisfied AGENT goal literals (original version)
+            for pos, char, is_positive in goal_description.agent_goals:
+                _, obj = state.object_at(pos)
+
+                if is_positive:
+                    if obj != char:
+                        count += 1
+                else:
+                    if obj == char:
+                        count += 1
+
         return count
 
 
