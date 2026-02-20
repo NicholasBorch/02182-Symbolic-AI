@@ -20,6 +20,8 @@ from search.domain.goal_description import GoalDescription
 from search.domain.state import State
 from search.domain.level import Level, Position
 
+from collections import deque
+
 
 # Used for typing
 class Heuristic(Protocol):
@@ -59,11 +61,18 @@ class GoalCountHeuristic:
 
 
 class AdvancedHeuristic:
+    MODE = "manhattan" # toggle between "manhattan" and "bfs" distance
+
     def __init__(self):
         self.distance_map : dict[str, dict[Position, int]] = {}
+        self._walkable: dict[Position, bool] = {}
+        self._rows = 0
+        self._cols = 0
         # raise NotImplementedError("Implement initialization")
 
     def preprocess(self, level: Level):
+        self.distance_map = {}
+        self._walkable = {}
         # This function will be called a single time prior to the search allowing us to preprocess the level such as
         # pre-computing l$ookup tables or other acceleration structures
         """
@@ -78,6 +87,8 @@ class AdvancedHeuristic:
         # Create grid and remove the walls
         grid = np.array(level.walls) 
         borderless_rows, border_less_columns = grid[1:-1, 1:-1].shape
+        self._rows = borderless_rows
+        self._cols = border_less_columns
         
         game_grid = {}
         for row in range(1, borderless_rows+1):
@@ -88,11 +99,23 @@ class AdvancedHeuristic:
         for position, agent, _ in level.agent_goals:
             goal_positions[agent] = position
             self.distance_map[agent] = {}
-        
-        for agent in goal_positions.keys():   
-            for coordinate in game_grid.keys():
-                distance = self._manhatten_distance(coordinate, goal_positions[agent])
-                self.distance_map[agent][coordinate] = distance
+
+        if self.MODE == "manhattan":
+            for agent in goal_positions.keys():   
+                for coordinate in game_grid.keys():
+                    distance = self._manhatten_distance(coordinate, goal_positions[agent])
+                    self.distance_map[agent][coordinate] = distance
+
+        elif self.MODE == "bfs":
+
+            interior_grid = grid[1:-1, 1:-1]
+            for row in range(1, borderless_rows+1):
+                for columns in range(1, border_less_columns+1):
+                    cell = interior_grid[row-1, columns-1]
+                    self._walkable[(row, columns)] = (cell != '+')
+
+            for agent, goal_position in goal_positions.items():
+                self.distance_map[agent] = self._bfs_distance(goal_position)
 
 
     def h(self, state: State, goal_description: GoalDescription) -> int:
@@ -104,7 +127,10 @@ class AdvancedHeuristic:
         for agent, position in agent_positions.items():
             if agent not in self.distance_map:
                 continue
-            total_distance += self.distance_map[agent][position]
+            if self.MODE == "bfs":
+                total_distance += self.distance_map[agent].get(position, 10**9)
+            else:
+                total_distance += self.distance_map[agent][position]
         
         return total_distance
 
@@ -112,3 +138,25 @@ class AdvancedHeuristic:
     def _manhatten_distance(self, agent_position: Position, goal_position: Position) -> int:
         """Computes the manhatten distance between the agent and the goal"""
         return abs(agent_position[0] - goal_position[0]) + abs(agent_position[1] - goal_position[1])
+    
+
+    def _bfs_distance(self, goal_position: Position) -> dict[Position, int]:
+        qeue = deque([goal_position])
+        distance = {goal_position: 0}
+
+        while qeue:
+            row, column = qeue.popleft()
+            d = distance[(row, column)]
+
+            for next_row, next_column in ((row+1, column), (row-1, column), (row, column+1), (row, column-1)):
+                if (next_row, next_column) in distance:
+                    continue
+                if next_row < 1 or next_row > self._rows or next_column < 1 or next_column > self._cols:
+                    continue
+                if not self._walkable.get((next_row, next_column), False):
+                    continue
+
+                distance[(next_row, next_column)] = d + 1
+                qeue.append((next_row, next_column))
+
+        return distance
