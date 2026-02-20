@@ -1,0 +1,26 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches: main 
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build test Docker image
+      run: |
+        docker build -t mavis-test -f .devcontainer/Dockerfile .devcontainer/
+    
+    - name: Run tests in container
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}:/workspaces/mavis_client \
+          -w /workspaces/mavis_client \
+          mavis-test \
+          bash -c "pytest test/ -v -s"

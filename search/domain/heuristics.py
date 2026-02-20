@@ -79,7 +79,8 @@ class AdvancedHeuristic:
         self._rows : int
         self._cols : int
         self.mode : str = mode
-        self.legal_positions : set[Position]
+        self.legal_positions : set[Position] = set()
+        self.goal_positions : dict[str, Position] = {}
         self._preprocess_strategies = {
             "manhattan": self._preprocess_manhattan,
             "bfs": self._preprocess_bfs
@@ -89,30 +90,14 @@ class AdvancedHeuristic:
             raise ValueError(f"Unsupported heuristic mode: {mode}. Supported modes are: {list(self._preprocess_strategies.keys())}")
 
     def preprocess(self, level: Level):
-        """
-        Preprocess the level to build distance maps.
-        level.walls is a 2D list of walls and open spaces. Coordinates are in (row, column).
-        Grid example:
-        (Wall) (Wall) (Wall) (Wall) (Wall)
-        (Wall) (1, 1) (1, 2) (1, 3) (Wall)
-        (Wall) (2, 1) (2, 2) (2, 3) (Wall)
-        (Wall) (3, 1) (3, 2) (3, 3) (Wall)
-        (Wall) (Wall) (Wall) (Wall) (Wall)
-        """
+        """This function will be called a single time prior to the search allowing us to preprocess the level such as
+        pre-computing lookup tables or other acceleration structures"""
 
-        grid = np.asarray(level.walls)
-        self._rows, self._cols = grid.shape
-        
-        x_range = np.arange(self._cols)
-        y_range = np.arange(self._rows)
-        x_coordinates, y_coordinates = np.meshgrid(y_range, x_range, indexing='ij')
-        grid_coordinates = np.stack((x_coordinates, y_coordinates), axis=-1)
-        legal_positions = grid_coordinates[~grid].tolist()
-        self.legal_positions = sorted({tuple(item) for item in legal_positions})
-
-        goal_positions = self._get_goal_positions(level.agent_goals)
+        self.legal_positions = self._get_legal_positions(level.walls)
+        self.goal_positions = self._get_goal_positions(level.agent_goals)
         preprocess_function = self._preprocess_strategies.get(self.mode)
-        preprocess_function(goal_positions)
+        preprocess_function(self.goal_positions)
+
 
     def h(self, state: State, goal_description: GoalDescription) -> int:
         agent_positions : dict[str, Position] = {}
@@ -149,28 +134,49 @@ class AdvancedHeuristic:
     def _bfs_distance(self, goal_position: Position) -> dict[Position, int]:
         """Compute shortest path distances from goal position using BFS."""
         queue = deque([goal_position])
-        distance = {goal_position: 0}
+        position_distances_from_goal : dict[Position, int] = {goal_position: 0}
 
         while queue:
             row, column = queue.popleft()
-            d = distance[(row, column)]
+            position_distance = position_distances_from_goal[(row, column)]
             
             up, down, right, left = (row+1, column), (row-1, column), (row, column+1), (row, column-1)
             for next_row, next_column in (up, down, right, left):
                 if (next_row, next_column) not in self.legal_positions:
                     continue
-                if (next_row, next_column) in distance:
+                if (next_row, next_column) in position_distances_from_goal:
                     continue
             
-                distance[(next_row, next_column)] = d + 1
+                position_distances_from_goal[(next_row, next_column)] = position_distance + 1
                 queue.append((next_row, next_column))
                 
-        return distance
+        return position_distances_from_goal
     
     
     def _get_goal_positions(self, goal_description: GoalDescription) -> dict[str, Position]:
         goal_positions = {}
         for position, agent, _ in goal_description:
             goal_positions[agent] = position
-            
+
         return goal_positions
+    
+    def _get_legal_positions(self, walls: list[list[bool]]) -> set[Position]:
+        """"
+        level.walls returns a 2D list of booleans indicating where the walls are.
+        Example:
+                [True, True,  True,  True,  True],
+                [True, False, False, False, True],
+                [True, False, True,  False, True],
+                [True, False, False, False, True],
+                [True, True,  True,  True,  True]
+        
+        Iterating through all cells and appending the row and column indices gives us a set of legal positions. 
+        """
+        
+        legal_positions = set()
+        for row_index, row in enumerate(walls):
+            for col_index, cell in enumerate(row):
+                if cell == False:
+                    legal_positions.add(Position(row_index, col_index))
+
+        return legal_positions
