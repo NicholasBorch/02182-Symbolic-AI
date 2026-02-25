@@ -74,61 +74,29 @@ class GoalCountHeuristic:
 
 
 class AdvancedHeuristic:
-    MODE = "manhattan" # toggle between "manhattan" and "bfs" distance
-
-    def __init__(self):
+    def __init__(self, mode: str = "manhattan"):
         self.distance_map : dict[str, dict[Position, int]] = {}
-        self._walkable: dict[Position, bool] = {}
-        self._rows = 0
-        self._cols = 0
-        # raise NotImplementedError("Implement initialization")
+        self._rows : int
+        self._cols : int
+        self.mode : str = mode
+        self.legal_positions : set[Position] = set()
+        self.goal_positions : dict[str, Position] = {}
+        self._preprocess_strategies = {
+            "manhattan": self._preprocess_manhattan,
+            "bfs": self._preprocess_bfs
+        }
+
+        if self.mode not in self._preprocess_strategies:
+            raise ValueError(f"Unsupported heuristic mode: {mode}. Supported modes are: {list(self._preprocess_strategies.keys())}")
 
     def preprocess(self, level: Level):
-        self.distance_map = {}
-        self._walkable = {}
-        # This function will be called a single time prior to the search allowing us to preprocess the level such as
-        # pre-computing l$ookup tables or other acceleration structures
-        """
-        level.walls is a 2D list of walls and open spaces. Coordinates are in (row, column), and not counting the walls
-        Grid example:
-        (Wall) (Wall) (Wall) (Wall) (Wall)
-        (Wall) (1, 1) (1, 2) (1, 3) (Wall)
-        (Wall) (2, 1) (2, 2) (2, 3) (Wall)
-        (Wall) (3, 1) (3, 2) (3, 3) (Wall)
-        (Wall) (Wall) (Wall) (Wall) (Wall)
-        """
-        # Create grid and remove the walls
-        grid = np.array(level.walls) 
-        borderless_rows, border_less_columns = grid[1:-1, 1:-1].shape
-        self._rows = borderless_rows
-        self._cols = border_less_columns
-        
-        game_grid = {}
-        for row in range(1, borderless_rows+1):
-            for columns in range(1, border_less_columns+1):
-                game_grid[(row, columns)] = "wall"
-                                
-        goal_positions = {}
-        for position, agent, _ in level.agent_goals:
-            goal_positions[agent] = position
-            self.distance_map[agent] = {}
+        """This function will be called a single time prior to the search allowing us to preprocess the level such as
+        pre-computing lookup tables or other acceleration structures"""
 
-        if self.MODE == "manhattan":
-            for agent in goal_positions.keys():   
-                for coordinate in game_grid.keys():
-                    distance = self._manhatten_distance(coordinate, goal_positions[agent])
-                    self.distance_map[agent][coordinate] = distance
-
-        elif self.MODE == "bfs":
-
-            interior_grid = grid[1:-1, 1:-1]
-            for row in range(1, borderless_rows+1):
-                for columns in range(1, border_less_columns+1):
-                    cell = interior_grid[row-1, columns-1]
-                    self._walkable[(row, columns)] = (cell != '+')
-
-            for agent, goal_position in goal_positions.items():
-                self.distance_map[agent] = self._bfs_distance(goal_position)
+        self.legal_positions = self._get_legal_positions(level.walls)
+        self.goal_positions = self._get_goal_positions(level.agent_goals)
+        preprocess_function = self._preprocess_strategies.get(self.mode)
+        preprocess_function(self.goal_positions)
 
 
     def h(self, state: State, goal_description: GoalDescription) -> int:
@@ -140,36 +108,75 @@ class AdvancedHeuristic:
         for agent, position in agent_positions.items():
             if agent not in self.distance_map:
                 continue
-            if self.MODE == "bfs":
-                total_distance += self.distance_map[agent].get(position, 10**9)
-            else:
-                total_distance += self.distance_map[agent][position]
+            total_distance += self.distance_map[agent].get(position, 10**9)
         
         return total_distance
+    
+
+    def _preprocess_manhattan(self, goal_positions: dict[str, Position]):
+        for agent, goal_pos in goal_positions.items():
+            self.distance_map[agent] = {}
+            for position in self.legal_positions:
+                distance = self._manhattan_distance(position, goal_pos)
+                self.distance_map[agent][position] = distance
 
 
-    def _manhatten_distance(self, agent_position: Position, goal_position: Position) -> int:
-        """Computes the manhatten distance between the agent and the goal"""
+    def _preprocess_bfs(self, goal_positions: dict[str, Position]):
+        for agent, goal_position in goal_positions.items():
+            self.distance_map[agent] = self._bfs_distance(goal_position)
+
+
+    def _manhattan_distance(self, agent_position: Position, goal_position: Position) -> int:
+        """Computes the Manhattan distance between the agent and the goal."""
         return abs(agent_position[0] - goal_position[0]) + abs(agent_position[1] - goal_position[1])
     
 
     def _bfs_distance(self, goal_position: Position) -> dict[Position, int]:
-        qeue = deque([goal_position])
-        distance = {goal_position: 0}
+        """Compute shortest path distances from goal position using BFS."""
+        queue = deque([goal_position])
+        position_distances_from_goal : dict[Position, int] = {goal_position: 0}
 
-        while qeue:
-            row, column = qeue.popleft()
-            d = distance[(row, column)]
-
-            for next_row, next_column in ((row+1, column), (row-1, column), (row, column+1), (row, column-1)):
-                if (next_row, next_column) in distance:
+        while queue:
+            row, column = queue.popleft()
+            position_distance = position_distances_from_goal[(row, column)]
+            
+            up, down, right, left = (row+1, column), (row-1, column), (row, column+1), (row, column-1)
+            for next_row, next_column in (up, down, right, left):
+                if (next_row, next_column) not in self.legal_positions:
                     continue
-                if next_row < 1 or next_row > self._rows or next_column < 1 or next_column > self._cols:
+                if (next_row, next_column) in position_distances_from_goal:
                     continue
-                if not self._walkable.get((next_row, next_column), False):
-                    continue
+            
+                position_distances_from_goal[(next_row, next_column)] = position_distance + 1
+                queue.append((next_row, next_column))
+                
+        return position_distances_from_goal
+    
+    
+    def _get_goal_positions(self, goal_description: GoalDescription) -> dict[str, Position]:
+        goal_positions = {}
+        for position, agent, _ in goal_description:
+            goal_positions[agent] = position
 
-                distance[(next_row, next_column)] = d + 1
-                qeue.append((next_row, next_column))
+        return goal_positions
+    
+    def _get_legal_positions(self, walls: list[list[bool]]) -> set[Position]:
+        """"
+        level.walls returns a 2D list of booleans indicating where the walls are.
+        Example:
+                [True, True,  True,  True,  True],
+                [True, False, False, False, True],
+                [True, False, True,  False, True],
+                [True, False, False, False, True],
+                [True, True,  True,  True,  True]
+        
+        Iterating through all cells and appending the row and column indices gives us a set of legal positions. 
+        """
+        
+        legal_positions = set()
+        for row_index, row in enumerate(walls):
+            for col_index, cell in enumerate(row):
+                if cell == False:
+                    legal_positions.add(Position(row_index, col_index))
 
-        return distance
+        return legal_positions
