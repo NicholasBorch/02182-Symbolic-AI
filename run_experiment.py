@@ -12,6 +12,7 @@ def run_uninformed_search(level:str, strategy:str, timeout : int = 310, max_memo
     
     print(cmd)
 
+<<<<<<< HEAD
     # try:
     #     result = subprocess.run(
     #         cmd,
@@ -23,6 +24,19 @@ def run_uninformed_search(level:str, strategy:str, timeout : int = 310, max_memo
     # except subprocess.TimeoutExpired:
     #     print(f"Timeout expired for level {level} with strategy {strategy}")
     #     return "Timeout", "Timeout  expired"
+=======
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout+15,
+            cwd="/workspaces/mavis_client"
+        )
+    except subprocess.TimeoutExpired:
+        print(f"Timeout expired for level {level} with strategy {strategy}")
+        return "Timeout", "Timeout  expired"
+>>>>>>> 842a3cc (New stuff)
     
     # return result.stdout, result.stderr
 
@@ -109,10 +123,17 @@ run_uninformed_search("BFSfriendly", "bfs")
 # ]
 
 
+<<<<<<< HEAD
 # def run_exercise2(timeout=310, max_memory="48g") -> Dict[str, Dict[str, str]]:
 #     """Exercise 2: BFS on MAPF levels"""
 #     print("\n=== EXERCISE 2: BFS for Multi-Agent Pathfinding ===\n")
 #     results: Dict[str, Dict[str, str]] = {}
+=======
+def run_exercise2(timeout=310, max_memory="48g") -> Dict[str, Dict[str, str]]:
+    """Exercise 2: BFS on MAPF levels"""
+    print("\n=== EXERCISE 2: BFS for Multi-Agent Pathfinding ===\n")
+    results: Dict[str, Dict[str, str]] = {}
+>>>>>>> 842a3cc (New stuff)
     
 #     for level in exercise2_levels:
 #         print(f"Running BFS on level {level}")
@@ -295,9 +316,17 @@ run_uninformed_search("BFSfriendly", "bfs")
 #     # Run all exercises with 3-minute timeout and 48GB memory
 #     # run_all_exercises(timeout=300, max_memory="48g")
     
+<<<<<<< HEAD
 #     # Or run individual exercises:
 #     # run_exercise2()
 #     # run_exercise3()
 #     # run_exercise4()
 #     # run_exercise5()
 #     run_uninformed_search("BFSfriendly", "bfs")
+=======
+    # Or run individual exercises:
+    run_exercise2()
+    run_exercise3()
+    run_exercise4()
+    # run_exercise5()
+>>>>>>> 842a3cc (New stuff)
