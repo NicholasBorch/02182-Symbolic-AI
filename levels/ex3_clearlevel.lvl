@@ -1,0 +1,25 @@
+#domain
+hospital
+#levelname
+EX3 Clear Level
+#colors
+blue: 0, A
+#initial
+++++++++++
++0A      +
++        +
++        +
++        +
++        +
++        +
+++++++++++
+#goal
+++++++++++
++        +
++        +
++        +
++        +
++        +
++   A    +
+++++++++++
+#end

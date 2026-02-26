@@ -1,0 +1,20 @@
+#domain
+hospital
+#levelname
+EX1 Decentralised Not Working
+#colors
+red: 0, A
+blue: 1, B
+#initial
++++++++++++++
++           +
++A0       1B+
++           +
++++++++++++++
+#goal
++++++++++++++
++           +
++ B       A +
++           +
++++++++++++++
+#end

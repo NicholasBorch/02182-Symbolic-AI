@@ -1,0 +1,28 @@
+#domain
+hospital
+#levelname
+EX1 Decentralised Working
+#colors
+red: 0, A
+blue: 1, B
+#initial
+++++++++++++++++++++
++                  +
++      0  1        +
++                  +
++                  +
++                  +
++                  +
++  A            B  +
+++++++++++++++++++++
+#goal
+++++++++++++++++++++
++                  +
++                  +
++                  +
++                  +
++                  +
++                  +
++ A              B +
+++++++++++++++++++++
+#end
