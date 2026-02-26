@@ -34,9 +34,10 @@ class Heuristic(Protocol):
 
 class AdvancedGoalHeuristic():
     def __init__(self, mode: str = "bfs"):
-        # Separate distance maps for agents and boxes, keyed by goal label
         self.agent_distance_map : dict[str, dict[Position, int]] = {}
-        self.box_distance_map : dict[str, dict[Position, int]] = {}
+        # For each box letter, a list of distance maps (one per goal of that letter)
+        # e.g. box_goal_maps['A'] = [dist_map_goal1, dist_map_goal2, ...]
+        self.box_goal_maps : dict[str, list[dict[Position, int]]] = {}
         self._rows : int
         self._cols : int
         self.mode : str = mode
@@ -50,34 +51,44 @@ class AdvancedGoalHeuristic():
             raise ValueError(f"Unsupported heuristic mode: {mode}. Supported modes are: {list(self._preprocess_strategies.keys())}")
 
     def preprocess(self, level: Level):
-        """This function will be called a single time prior to the search allowing us to preprocess the level such as
-        pre-computing lookup tables or other acceleration structures"""
+        """Precompute BFS/manhattan distance maps from each goal position."""
 
         self.legal_positions = self._get_legal_positions(level.walls)
         compute_fn = self._preprocess_strategies[self.mode]
 
+        # Agent goals: one distance map per agent label
         agent_goal_positions = self._get_goal_positions(level.agent_goals)
         for label, goal_pos in agent_goal_positions.items():
             self.agent_distance_map[label] = compute_fn(goal_pos)
 
+        # Box goals: group by letter, store list of distance maps per letter
         for goal_pos, char, is_positive in level.box_goals:
             if not is_positive:
                 continue
-            self.box_distance_map[char] = compute_fn(goal_pos)
-            
-        pass
+            if char not in self.box_goal_maps:
+                self.box_goal_maps[char] = []
+            self.box_goal_maps[char].append(compute_fn(goal_pos))
 
 
     def h(self, state: State, goal_description: GoalDescription) -> int:
         total_distance = 0
 
+        # Agent distances (unchanged)
         for position, agent in state.agent_positions:
             if agent in self.agent_distance_map:
                 total_distance += self.agent_distance_map[agent].get(position, 10**9)
 
+        # Group current box positions by letter
+        boxes_by_char: dict[str, list[Position]] = {}
         for position, box_char in state.box_positions:
-            if box_char in self.box_distance_map:
-                total_distance += self.box_distance_map[box_char].get(position, 10**9)
+            boxes_by_char.setdefault(box_char, []).append(position)
+
+        # For each box, find the minimum distance to any goal of the same letter
+        for position, box_char in state.box_positions:
+            if box_char not in self.box_goal_maps:
+                continue
+            min_dist = min(dm.get(position, 10**9) for dm in self.box_goal_maps[box_char])
+            total_distance += min_dist
 
         return total_distance
 
