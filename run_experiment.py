@@ -9,6 +9,7 @@ def run_uninformed_search(level:str, strategy:str, timeout : int = 310, max_memo
         "-c", f"python3 client.py --max-memory {max_memory} classic --strategy {strategy}",
         "-l", f"levels/{level}.lvl"
     ]
+    
     print(cmd)
 
     try:
@@ -21,7 +22,7 @@ def run_uninformed_search(level:str, strategy:str, timeout : int = 310, max_memo
         )
     except subprocess.TimeoutExpired:
         print(f"Timeout expired for level {level} with strategy {strategy}")
-        return "Timeout", "Timeout expired"
+        return "Timeout", "Timeout  expired"
     
     return result.stdout, result.stderr
 
@@ -106,7 +107,7 @@ exercise5_soko_levels = [
 ]
 
 
-def run_exercise2(timeout=310, max_memory="48g"):
+def run_exercise2(timeout=310, max_memory="48g") -> Dict[str, Dict[str, str]]:
     """Exercise 2: BFS on MAPF levels"""
     print("\n=== EXERCISE 2: BFS for Multi-Agent Pathfinding ===\n")
     results: Dict[str, Dict[str, str]] = {}
@@ -270,4 +271,4 @@ if __name__ == "__main__":
     run_exercise2()
     run_exercise3()
     run_exercise4()
-    run_exercise5()
+    # run_exercise5()

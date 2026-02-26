@@ -32,6 +32,17 @@ class Heuristic(Protocol):
         ...
 
 
+class AdvancedGoalHeuristic(Protocol):
+    def __init__(self):
+        pass
+    def preprocess(self, level: Level) -> None:
+
+        pass
+
+    def h(self, state: State, goal_description: GoalDescription) -> int:
+        pass
+
+
 class GoalCountHeuristic:
     def __init__(self):
         pass

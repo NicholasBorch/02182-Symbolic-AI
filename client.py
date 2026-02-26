@@ -34,6 +34,7 @@ from search.domain import (
     Level,
     AdvancedHeuristic,
     GoalCountHeuristic,
+    AdvancedGoalHeuristic
 )
 from search.frontiers import BFSFrontier, DFSFrontier, AStarFrontier, GreedyFrontier
 
@@ -96,7 +97,7 @@ def create_parser():
     )
     strategy_parent.add_argument(
         "--heuristic",
-        choices=["goalcount", "advanced"],
+        choices=["goalcount", "advanced", "advancedgoal"],
         help="Select the heuristic (only relevant for A* and Greedy)."
     )
     
@@ -225,6 +226,8 @@ def main():
         heuristic = GoalCountHeuristic()
     elif heuristic_name == "advanced":
         heuristic = AdvancedHeuristic()
+    elif heuristic_name == "advancedgoal":
+        heuristic = AdvancedGoalHeuristic()
 
     # Some heuristics needs to preprocess the level to pre-compute distance lookup tables, matchings, etc.
     if heuristic is not None:
