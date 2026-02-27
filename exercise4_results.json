@@ -1,0 +1,254 @@
+{
+    "MAPF00_astar_goalcount": {
+        "level": "MAPF00",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.007 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_astar_advanced": {
+        "level": "MAPF00",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 30\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.004 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_greedy_goalcount": {
+        "level": "MAPF00",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.007 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_greedy_advanced": {
+        "level": "MAPF00",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 31\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.004 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_astar_goalcount": {
+        "level": "MAPF01",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 2350\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.343 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_astar_advanced": {
+        "level": "MAPF01",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 486\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.018 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_greedy_goalcount": {
+        "level": "MAPF01",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 513\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 61.\n[server][info] Time to solve: 0.015 seconds.\n",
+        "stderr": "Found solution of length 61\n"
+    },
+    "MAPF01_greedy_advanced": {
+        "level": "MAPF01",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 454\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 18.\n[server][info] Time to solve: 0.031 seconds.\n",
+        "stderr": "Found solution of length 18\n"
+    },
+    "MAPF02_astar_goalcount": {
+        "level": "MAPF02",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 110445\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 49.595 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:   13.344, #Generated:   23.344, Time: 5,299 s, Memory: 108,92 MB\n#Expanded:   20.000, #Frontier:   17.428, #Generated:   37.428, Time: 10,254 s, Memory: 122,68 MB\n#Expanded:   30.000, #Frontier:   21.634, #Generated:   51.634, Time: 15,287 s, Memory: 133,00 MB\n#Expanded:   40.000, #Frontier:   21.461, #Generated:   61.461, Time: 20,133 s, Memory: 139,09 MB\n#Expanded:   50.000, #Frontier:   23.320, #Generated:   73.320, Time: 25,050 s, Memory: 147,51 MB\n#Expanded:   60.000, #Frontier:   20.634, #Generated:   80.634, Time: 29,654 s, Memory: 152,36 MB\n#Expanded:   70.000, #Frontier:   15.802, #Generated:   85.802, Time: 34,119 s, Memory: 154,75 MB\n#Expanded:   80.000, #Frontier:   12.885, #Generated:   92.885, Time: 38,191 s, Memory: 160,16 MB\n#Expanded:   90.000, #Frontier:    9.109, #Generated:   99.109, Time: 42,700 s, Memory: 163,01 MB\n#Expanded:  100.000, #Frontier:    5.361, #Generated:  105.361, Time: 46,602 s, Memory: 165,80 MB\nFound solution of length 14\n"
+    },
+    "MAPF02_astar_advanced": {
+        "level": "MAPF02",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 6297\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.236 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF02_greedy_goalcount": {
+        "level": "MAPF02",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 12810\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 263.\n[server][info] Time to solve: 0.201 seconds.\n",
+        "stderr": "Found solution of length 263\n"
+    },
+    "MAPF02_greedy_advanced": {
+        "level": "MAPF02",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 16192\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 18.\n[server][info] Time to solve: 3.574 seconds.\n",
+        "stderr": "Found solution of length 18\n"
+    },
+    "MAPF02C_astar_goalcount": {
+        "level": "MAPF02C",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF02C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 110489\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 49.095 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:   13.344, #Generated:   23.344, Time: 5,234 s, Memory: 108,74 MB\n#Expanded:   20.000, #Frontier:   17.428, #Generated:   37.428, Time: 10,088 s, Memory: 122,51 MB\n#Expanded:   30.000, #Frontier:   21.634, #Generated:   51.634, Time: 15,083 s, Memory: 132,81 MB\n#Expanded:   40.000, #Frontier:   21.461, #Generated:   61.461, Time: 19,869 s, Memory: 138,62 MB\n#Expanded:   50.000, #Frontier:   23.320, #Generated:   73.320, Time: 24,718 s, Memory: 147,05 MB\n#Expanded:   60.000, #Frontier:   20.634, #Generated:   80.634, Time: 29,209 s, Memory: 151,89 MB\n#Expanded:   70.000, #Frontier:   15.802, #Generated:   85.802, Time: 33,633 s, Memory: 154,29 MB\n#Expanded:   80.000, #Frontier:   12.885, #Generated:   92.885, Time: 37,600 s, Memory: 159,70 MB\n#Expanded:   90.000, #Frontier:    9.109, #Generated:   99.109, Time: 42,091 s, Memory: 162,55 MB\n#Expanded:  100.000, #Frontier:    5.361, #Generated:  105.361, Time: 45,966 s, Memory: 165,34 MB\nFound solution of length 14\n"
+    },
+    "MAPF02C_astar_advanced": {
+        "level": "MAPF02C",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF02C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 971\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 19.\n[server][info] Time to solve: 0.024 seconds.\n",
+        "stderr": "Found solution of length 19\n"
+    },
+    "MAPF02C_greedy_goalcount": {
+        "level": "MAPF02C",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF02C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 98700\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 4,814.\n[server][info] Time to solve: 2.774 seconds.\n",
+        "stderr": "Found solution of length 4814\n"
+    },
+    "MAPF02C_greedy_advanced": {
+        "level": "MAPF02C",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF02C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 878\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 23.\n[server][info] Time to solve: 0.021 seconds.\n",
+        "stderr": "Found solution of length 23\n"
+    },
+    "MAPF03_astar_goalcount": {
+        "level": "MAPF03",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPF03_astar_advanced": {
+        "level": "MAPF03",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF03.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 302825\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 18.659 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:  219.525, #Generated:  229.525, Time: 14,208 s, Memory: 329,01 MB\nFound solution of length 14\n"
+    },
+    "MAPF03_greedy_goalcount": {
+        "level": "MAPF03",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPF03.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 148501\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 741.\n[server][info] Time to solve: 2.411 seconds.\n",
+        "stderr": "Found solution of length 741\n"
+    },
+    "MAPF03_greedy_advanced": {
+        "level": "MAPF03",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPF03C_astar_goalcount": {
+        "level": "MAPF03C",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPF03C_astar_advanced": {
+        "level": "MAPF03C",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF03C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 4821\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 18.\n[server][info] Time to solve: 0.133 seconds.\n",
+        "stderr": "Found solution of length 18\n"
+    },
+    "MAPF03C_greedy_goalcount": {
+        "level": "MAPF03C",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPF03C_greedy_advanced": {
+        "level": "MAPF03C",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPF03C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 4592\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 25.\n[server][info] Time to solve: 0.097 seconds.\n",
+        "stderr": "Found solution of length 25\n"
+    },
+    "BFSfriendly_astar_goalcount": {
+        "level": "BFSfriendly",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/BFSfriendly.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 3\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 1.\n[server][info] Time to solve: 0.003 seconds.\n",
+        "stderr": "Found solution of length 1\n"
+    },
+    "BFSfriendly_astar_advanced": {
+        "level": "BFSfriendly",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/BFSfriendly.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 2\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 1.\n[server][info] Time to solve: 0.010 seconds.\n",
+        "stderr": "Found solution of length 1\n"
+    },
+    "BFSfriendly_greedy_goalcount": {
+        "level": "BFSfriendly",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/BFSfriendly.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 6575\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 1.\n[server][info] Time to solve: 0.384 seconds.\n",
+        "stderr": "Found solution of length 1\n"
+    },
+    "BFSfriendly_greedy_advanced": {
+        "level": "BFSfriendly",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/BFSfriendly.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 2\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 1.\n[server][info] Time to solve: 0.006 seconds.\n",
+        "stderr": "Found solution of length 1\n"
+    },
+    "MAPFslidingpuzzle_astar_goalcount": {
+        "level": "MAPFslidingpuzzle",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPFslidingpuzzle.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 181040\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 28.\n[server][info] Time to solve: 53.919 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:    5.749, #Generated:   15.749, Time: 3,041 s, Memory: 99,90 MB\n#Expanded:   20.000, #Frontier:   10.493, #Generated:   30.493, Time: 6,100 s, Memory: 112,18 MB\n#Expanded:   30.000, #Frontier:   12.256, #Generated:   42.256, Time: 9,077 s, Memory: 120,68 MB\n#Expanded:   40.000, #Frontier:   17.094, #Generated:   57.094, Time: 12,126 s, Memory: 130,29 MB\n#Expanded:   50.000, #Frontier:   19.465, #Generated:   69.465, Time: 15,080 s, Memory: 137,23 MB\n#Expanded:   60.000, #Frontier:   19.047, #Generated:   79.047, Time: 18,032 s, Memory: 142,34 MB\n#Expanded:   70.000, #Frontier:   22.776, #Generated:   92.776, Time: 21,085 s, Memory: 152,14 MB\n#Expanded:   80.000, #Frontier:   24.995, #Generated:  104.995, Time: 24,126 s, Memory: 161,26 MB\n#Expanded:   90.000, #Frontier:   25.229, #Generated:  115.229, Time: 27,180 s, Memory: 169,26 MB\n#Expanded:  100.000, #Frontier:   22.508, #Generated:  122.508, Time: 30,064 s, Memory: 172,11 MB\n#Expanded:  110.000, #Frontier:   21.783, #Generated:  131.783, Time: 33,041 s, Memory: 176,32 MB\n#Expanded:  120.000, #Frontier:   23.638, #Generated:  143.638, Time: 36,228 s, Memory: 182,67 MB\n#Expanded:  130.000, #Frontier:   22.274, #Generated:  152.274, Time: 39,183 s, Memory: 186,16 MB\n#Expanded:  140.000, #Frontier:   18.790, #Generated:  158.790, Time: 42,122 s, Memory: 188,45 MB\n#Expanded:  150.000, #Frontier:   14.451, #Generated:  164.451, Time: 45,246 s, Memory: 190,30 MB\n#Expanded:  160.000, #Frontier:   13.150, #Generated:  173.150, Time: 48,258 s, Memory: 197,11 MB\n#Expanded:  170.000, #Frontier:    7.788, #Generated:  177.788, Time: 51,169 s, Memory: 197,13 MB\nFound solution of length 28\n"
+    },
+    "MAPFslidingpuzzle_astar_advanced": {
+        "level": "MAPFslidingpuzzle",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPFslidingpuzzle.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 2933\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 28.\n[server][info] Time to solve: 0.590 seconds.\n",
+        "stderr": "Found solution of length 28\n"
+    },
+    "MAPFslidingpuzzle_greedy_goalcount": {
+        "level": "MAPFslidingpuzzle",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "[server][info] Running client on level: levels/MAPFslidingpuzzle.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 32236\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 17,854.\n[server][info] Time to solve: 5.675 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:    7.991, #Generated:   17.991, Time: 2,953 s, Memory: 103,96 MB\nFound solution of length 17854\n"
+    },
+    "MAPFslidingpuzzle_greedy_advanced": {
+        "level": "MAPFslidingpuzzle",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "[server][info] Running client on level: levels/MAPFslidingpuzzle.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 627\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 108.\n[server][info] Time to solve: 0.118 seconds.\n",
+        "stderr": "Found solution of length 108\n"
+    },
+    "MAPFreorder2_astar_goalcount": {
+        "level": "MAPFreorder2",
+        "strategy": "astar",
+        "heuristic": "goalcount",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPFreorder2_astar_advanced": {
+        "level": "MAPFreorder2",
+        "strategy": "astar",
+        "heuristic": "advanced",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPFreorder2_greedy_goalcount": {
+        "level": "MAPFreorder2",
+        "strategy": "greedy",
+        "heuristic": "goalcount",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPFreorder2_greedy_advanced": {
+        "level": "MAPFreorder2",
+        "strategy": "greedy",
+        "heuristic": "advanced",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    }
+}
