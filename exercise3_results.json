@@ -1,0 +1,62 @@
+{
+    "MAPF00_dfs": {
+        "level": "MAPF00",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.007 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_dfs": {
+        "level": "MAPF01",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 513\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 61.\n[server][info] Time to solve: 0.022 seconds.\n",
+        "stderr": "Found solution of length 61\n"
+    },
+    "MAPF02_dfs": {
+        "level": "MAPF02",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 12810\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 263.\n[server][info] Time to solve: 0.192 seconds.\n",
+        "stderr": "Found solution of length 263\n"
+    },
+    "MAPF02C_dfs": {
+        "level": "MAPF02C",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/MAPF02C.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 98700\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 4,814.\n[server][info] Time to solve: 2.605 seconds.\n",
+        "stderr": "Found solution of length 4814\n"
+    },
+    "MAPF03_dfs": {
+        "level": "MAPF03",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/MAPF03.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 148501\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 741.\n[server][info] Time to solve: 2.101 seconds.\n",
+        "stderr": "Found solution of length 741\n"
+    },
+    "MAPF03C_dfs": {
+        "level": "MAPF03C",
+        "strategy": "dfs",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "MAPFslidingpuzzle_dfs": {
+        "level": "MAPFslidingpuzzle",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/MAPFslidingpuzzle.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 32236\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 17,854.\n[server][info] Time to solve: 5.794 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:    7.991, #Generated:   17.991, Time: 3,020 s, Memory: 102,02 MB\nFound solution of length 17854\n"
+    },
+    "MAPFreorder2_dfs": {
+        "level": "MAPFreorder2",
+        "strategy": "dfs",
+        "stdout": "Timeout",
+        "stderr": "Timeout expired"
+    },
+    "BFSfriendly_dfs": {
+        "level": "BFSfriendly",
+        "strategy": "dfs",
+        "stdout": "[server][info] Running client on level: levels/BFSfriendly.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 6575\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 1.\n[server][info] Time to solve: 0.377 seconds.\n",
+        "stderr": "Found solution of length 1\n"
+    },
+    "BFSfriendly_bfs": {
+        "level": "BFSfriendly",
+        "strategy": "bfs",
+        "stdout": "[server][info] Running client on level: levels/BFSfriendly.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 2\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 1.\n[server][info] Time to solve: 0.003 seconds.\n",
+        "stderr": "Found solution of length 1\n"
+    }
+}

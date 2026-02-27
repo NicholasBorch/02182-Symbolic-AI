@@ -1,0 +1,74 @@
+{
+    "MAPF00_bfs": {
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.007 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_dfs": {
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.005 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_bfs": {
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 2350\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.347 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_dfs": {
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 513\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 61.\n[server][info] Time to solve: 0.014 seconds.\n",
+        "stderr": "Found solution of length 61\n"
+    },
+    "MAPF02_bfs": {
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 110445\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 48.598 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:   12.647, #Generated:   22.647, Time: 5,263 s, Memory: 106,97 MB\n#Expanded:   20.000, #Frontier:   16.084, #Generated:   36.084, Time: 10,232 s, Memory: 119,31 MB\n#Expanded:   30.000, #Frontier:   19.257, #Generated:   49.257, Time: 14,973 s, Memory: 128,75 MB\n#Expanded:   40.000, #Frontier:   18.261, #Generated:   58.261, Time: 19,548 s, Memory: 134,57 MB\n#Expanded:   50.000, #Frontier:   20.111, #Generated:   70.111, Time: 24,359 s, Memory: 142,98 MB\n#Expanded:   60.000, #Frontier:   17.109, #Generated:   77.109, Time: 28,611 s, Memory: 147,43 MB\n#Expanded:   70.000, #Frontier:   14.766, #Generated:   84.766, Time: 33,478 s, Memory: 151,82 MB\n#Expanded:   80.000, #Frontier:   11.970, #Generated:   91.970, Time: 37,462 s, Memory: 157,62 MB\n#Expanded:   90.000, #Frontier:    8.278, #Generated:   98.278, Time: 41,785 s, Memory: 161,11 MB\n#Expanded:  100.000, #Frontier:    5.125, #Generated:  105.125, Time: 45,676 s, Memory: 164,75 MB\nFound solution of length 14\n"
+    },
+    "MAPF02_dfs": {
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 12810\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 263.\n[server][info] Time to solve: 0.193 seconds.\n",
+        "stderr": "Found solution of length 263\n"
+    },
+    "MAPF00_astar_goalcount": {
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.006 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_astar_advanced": {
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 30\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.006 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_greedy_goalcount": {
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 48\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.007 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF00_greedy_advanced": {
+        "stdout": "[server][info] Running client on level: levels/MAPF00.lvl\n[client][error] Invalid joint action:\n[client][error] States generated: 31\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.004 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_astar_goalcount": {
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 2350\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.367 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_astar_advanced": {
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 486\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.017 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF01_greedy_goalcount": {
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 513\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 61.\n[server][info] Time to solve: 0.017 seconds.\n",
+        "stderr": "Found solution of length 61\n"
+    },
+    "MAPF01_greedy_advanced": {
+        "stdout": "[server][info] Running client on level: levels/MAPF01.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 454\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 18.\n[server][info] Time to solve: 0.033 seconds.\n",
+        "stderr": "Found solution of length 18\n"
+    },
+    "MAPF02_astar_goalcount": {
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 110445\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 50.339 seconds.\n",
+        "stderr": "#Expanded:   10.000, #Frontier:   13.344, #Generated:   23.344, Time: 5,360 s, Memory: 109,41 MB\n#Expanded:   20.000, #Frontier:   17.428, #Generated:   37.428, Time: 10,452 s, Memory: 123,18 MB\n#Expanded:   30.000, #Frontier:   21.634, #Generated:   51.634, Time: 15,582 s, Memory: 133,49 MB\n#Expanded:   40.000, #Frontier:   21.461, #Generated:   61.461, Time: 20,443 s, Memory: 139,57 MB\n#Expanded:   50.000, #Frontier:   23.320, #Generated:   73.320, Time: 25,381 s, Memory: 148,00 MB\n#Expanded:   60.000, #Frontier:   20.634, #Generated:   80.634, Time: 30,002 s, Memory: 152,85 MB\n#Expanded:   70.000, #Frontier:   15.802, #Generated:   85.802, Time: 34,514 s, Memory: 155,25 MB\n#Expanded:   80.000, #Frontier:   12.885, #Generated:   92.885, Time: 38,653 s, Memory: 160,66 MB\n#Expanded:   90.000, #Frontier:    9.109, #Generated:   99.109, Time: 43,253 s, Memory: 163,50 MB\n#Expanded:  100.000, #Frontier:    5.361, #Generated:  105.361, Time: 47,259 s, Memory: 166,30 MB\nFound solution of length 14\n"
+    },
+    "MAPF02_astar_advanced": {
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 6297\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 0.240 seconds.\n",
+        "stderr": "Found solution of length 14\n"
+    },
+    "MAPF02_greedy_goalcount": {
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 12810\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 263.\n[server][info] Time to solve: 0.205 seconds.\n",
+        "stderr": "Found solution of length 263\n"
+    },
+    "MAPF02_greedy_advanced": {
+        "stdout": "[server][info] Running client on level: levels/MAPF02.lvl\n[client][error] Invalid number of agents in joint action:\n[client][error] States generated: 16192\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 18.\n[server][info] Time to solve: 3.631 seconds.\n",
+        "stderr": "Found solution of length 18\n"
+    }
+}
