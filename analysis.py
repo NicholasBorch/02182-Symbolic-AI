@@ -53,5 +53,12 @@ if __name__ == "__main__":
         # print(df.to_string(index=False))
         # print("\n")
     
-    df = load_results("exercise4_results.json")
-    print(df[df['Heuristic'] == "ADVANCED"]) 
+    # df = load_results("exercise4_results.json")
+    # print(df[df['Heuristic'] == "ADVANCED"]) 
+    df_ex2 = load_results("exercise2_results.json")
+    df_ex3 = load_results("exercise3_results.json")
+    df_ex4 = load_results("exercise4_results.json")
+    df_ex5 = load_results("exercise5_results.json")
+    
+    
+    pd.concat([df_ex2, df_ex3]).drop(columns=['Heuristic'])
