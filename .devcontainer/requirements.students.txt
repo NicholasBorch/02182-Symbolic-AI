@@ -1,2 +1,4 @@
 # Add pip packages to your environment here.
 pytest
+pandas
+numpy
