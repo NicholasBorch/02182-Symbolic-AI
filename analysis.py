@@ -15,9 +15,9 @@ def parse_result(entry: dict) -> dict:
     time_match = re.search(r"Time to solve:\s*([\d.]+)\s*seconds", stdout)
     time_s = float(time_match.group(1)) if time_match else None
 
-    # Solution length: from stdout "[server][info] Actions used: 14."
-    actions_match = re.search(r"Actions used:\s*(\d+)", stdout)
-    solution_length = int(actions_match.group(1)) if actions_match else None
+    # Solution length: from stdout "[server][info] Actions used: 14." or "2,461."
+    actions_match = re.search(r"Actions used:\s*([\d,]+)", stdout)
+    solution_length = int(actions_match.group(1).replace(",", "")) if actions_match else None
 
     # Mark timeouts explicitly
     if stdout == "Timeout":
