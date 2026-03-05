@@ -43,6 +43,7 @@ def load_results(filepath: str) -> pd.DataFrame:
 
     rows = [parse_result(entry) for entry in data.values()]
     df = pd.DataFrame(rows, columns=["Level", "Strategy", "Heuristic", "States Generated", "Time/s", "Solution length"])
+    df["States Generated"] = pd.to_numeric(df["States Generated"], errors='coerce').astype("Int64")
     return df
 
 
