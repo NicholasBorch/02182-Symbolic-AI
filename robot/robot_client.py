@@ -10,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 from robot.robot_utils import VideoStreamThread
 from threading import Thread
 import paramiko
@@ -22,7 +24,6 @@ import numpy as np
 import qi
 import time
 import json
-import re
 
 from search import print_debug
 
@@ -43,10 +44,12 @@ class RobotClient:
         self.vision_port: int = None
         self.vision_thread: VideoStreamThread = None
         self.config_file = config_file
+        self.ssh: paramiko.SSHClient = None
+        self.ssh_vision: paramiko.SSHClient = None
 
         self.__load_config()
-        ssh = self.__connect_to_robot_SSH()
-        self.scp = SCPClient(ssh.get_transport())
+        self.ssh = self.__connect_to_robot_SSH()
+        self.scp = SCPClient(self.ssh.get_transport())
 
         self.__initialize_ALProxies()
         self.__initialize_robot()
@@ -98,41 +101,48 @@ class RobotClient:
             ssh.connect(self.ip, username=self.username,
                         password=self.password)
 
-            # If vision is enabled, run the ./pepper_cameras script to start the video stream
-            if self.vision:
-                ssh_vision = paramiko.SSHClient()
-                ssh_vision.set_missing_host_key_policy(
-                    paramiko.AutoAddPolicy())
-                ssh_vision.load_system_host_keys()
-                ssh_vision.connect(
-                    self.ip, username=self.username, password=self.password)
-                _, stdout_vision, _ = ssh_vision.exec_command(
-                    './pepper_cameras', get_pty=True)
-                port = None
-                for i, line in enumerate(iter(stdout_vision.readline, "")):
-                    if i == 6:
-                        # print_debug("Reading vision port:")
-                        # print_debug("line:", line)
-                        port = ''.join(re.findall(r'\d+', line))
-                        port = int(''.join(map(str, port)))
-                        break
-
-                if port is not None and port != self.vision_port:
-                    # save the port number for the video stream in the json file
-                    with open(self.config_file, 'r') as config_file:
-                        config = json.load(config_file)
-                        credentials = config
-                        robot_cred = credentials.get(self.ip)
-                        robot_cred['vision_port'] = port
-                        config[self.ip] = robot_cred
-                    with open(self.config_file, 'w') as config_file:
-                        json.dump(config, config_file)
-
             return ssh
         except paramiko.AuthenticationException:
             print_debug(
                 "Authentication failed, please verify your credentials.")
             raise
+
+    def __is_port_listening(self, ssh: paramiko.SSHClient, port: int) -> bool:
+        _, stdout, _ = ssh.exec_command(
+            f"netstat -tuln 2>/dev/null | grep -q ':{port} ' && echo LISTENING || echo NOT_LISTENING")
+        status = stdout.read().decode('utf-8').strip()
+        return status == 'LISTENING'
+
+    def __start_vision_server(self) -> None:
+        if self.__is_port_listening(self.ssh, self.vision_port):
+            return
+
+        if self.ssh_vision is not None:
+            self.ssh_vision.close()
+            self.ssh_vision = None
+
+        self.ssh.exec_command(
+            "pkill -f '[./]pepper_cameras' >/dev/null 2>&1 || true")
+
+        # Give Pepper a brief moment after wake-up/posture changes before claiming the camera.
+        time.sleep(2.0)
+
+        self.ssh_vision = paramiko.SSHClient()
+        self.ssh_vision.set_missing_host_key_policy(
+            paramiko.AutoAddPolicy())
+        self.ssh_vision.load_system_host_keys()
+        self.ssh_vision.connect(
+            self.ip, username=self.username, password=self.password)
+        self.ssh_vision.exec_command(
+            'cd ~ && ./pepper_cameras >/dev/null 2>&1', get_pty=True)
+
+        for _ in range(40):
+            if self.__is_port_listening(self.ssh, self.vision_port):
+                return
+            time.sleep(0.25)
+
+        raise RuntimeError(
+            f"Could not start vision server on port {self.vision_port}.")
 
     def __initialize_ALProxies(self):
         """Lazy initialization of ALProxies."""
@@ -195,6 +205,8 @@ class RobotClient:
         -------
             The video thread that will run the vision process and images can be accessed from the thread.
         """
+
+        self.__start_vision_server()
 
         # Create video thread that will run the vision process and images can be accessed from the thread
         self.video_thread = VideoStreamThread(ip, vision_port)
@@ -373,6 +385,7 @@ class RobotClient:
         :param file_name: File name with extension (or path)
         :type file_name: string
         """
+        os.makedirs("tmp/", exist_ok=True)
         self.scp.get(file_name, local_path="tmp/")
         print_debug("[INFO]: File tmp/" + file_name + " downloaded")
         self.scp.close()
@@ -422,6 +435,12 @@ class RobotClient:
 
         self.motion.rest()
 
+        if self.ssh_vision is not None:
+            self.ssh_vision.close()
+
+        if self.ssh is not None:
+            self.ssh.close()
+
 
 if __name__ == '__main__':
     # get the ip address of the robot
@@ -458,7 +477,7 @@ if __name__ == '__main__':
     robot.head_position(0, math.radians(22.5), relative_speed=0.1)
     if robot_vision.tag_in_view:
         print_debug("Closest tag to the bottom middle of the image:",
-              robot_vision.closest_tag)
+                    robot_vision.closest_tag)
         print_debug("Middle bottom of the image:", robot_vision.middle_bottom)
     else:
         print_debug("No tag in view")
