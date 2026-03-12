@@ -37,4 +37,43 @@ def decentralised_agent(
     # You can use the 'classic' agent type as a starting point for how to communicate with the server, i.e.
     # use 'send_joint_action' to send a joint_action to the server which will read back an array of booleans indicating
     # whether each individual action in the joint action succeeded.
-    raise NotImplementedError()
+    
+    plans = []
+    for i in range(level.num_agents):
+        
+        # Initialize agent
+        agent_char = level.initial_agent_positions[i][1]
+        agent_color = level.colors[agent_char]
+        
+        # Monochrome
+        monochrome_state = initial_state.color_filter(agent_color)
+        monochrome_goal = goal_description.color_filter(agent_color)
+        
+        monochrome_action_set = [action_library]
+        
+        # Search for a plan using the reduced monochrome problem
+        success, plan = graph_search(monochrome_state, monochrome_action_set, monochrome_goal, frontier)
+        
+        if not success:
+            print_debug(f"Agent {i} could not find a plan!")
+            plan = []
+            
+        plans.append(list(plan))
+    
+    # While at least one agent has actions left to execute
+    while any(len(plan) > 0 for plan in plans):
+        
+        # Initialize joint action
+        joint_action = []
+        for i in range(level.num_agents):
+            if len(plans[i]) == 0:
+                joint_action.append(NoOp())
+            else:
+                joint_action.append(plans[i][0][0])
+                
+        successes = send_joint_action(joint_action)
+        
+        for i in range(level.num_agents):
+            if successes[i] and len(plans[i]) > 0:
+                plans[i].pop(0)
+        
