@@ -44,4 +44,113 @@ def helper_agent(
     # - You probably want to create a helper function for creating the set of negative obstacle subgoals.
     #   You can then create a new goal description using 'goal_description.create_new_goal_description_of_same_type'
     #   which takes a list of subgoals.
-    raise NotImplementedError()
+    actor_char = level.initial_agent_positions[0][1]
+    actor_color = level.colors[actor_char]
+    actor_goal = goal_description.color_filter(actor_color)
+    
+    # Initialize state
+    current_state = initial_state
+    
+    # Process subgoals one at a time
+    for i in range(actor_goal.num_sub_goals()):
+        subgoal = actor_goal.get_sub_goal(i)
+        
+        while not subgoal.is_goal(current_state):
+            # Actor plans color-blind on filtered state
+            monochrome_state = current_state.color_filter(actor_color)
+            success, plan = graph_search(monochrome_state, [action_library], subgoal, frontier)
+            # See if success
+            assert success, "Actor could not find a plan for subgoal" 
+            
+            # Execute plan step by step
+            replanning_needed = False
+            for step in plan:
+                # Expand 1-agent action into joint action
+                actor_action = step[0]
+                joint_action = tuple(
+                    actor_action if i == 0 else NoOp()
+                    for i in range(level.num_agents)
+                )
+                
+                successes = send_joint_action(joint_action)
+                
+                if successes[0]:
+                    # Update current state
+                    current_state = current_state.result(joint_action)
+                else:
+                    current_monochrome = current_state.color_filter(actor_color)
+                    remaining_plan = plan[plan.index(step):]
+                    path_positions = get_path_positions(current_monochrome, remaining_plan)
+                    
+                    blocking_pos, obstacle_char = find_obstacle(current_state, path_positions, actor_color, level)
+                    
+                    assert obstacle_char is not None, "Could not find obstacle"
+                    
+                    helper_index = find_helper_index(obstacle_char, level, current_state)
+                    helper_char = current_state.agent_positions[helper_index][1]
+                    
+                    obstacle_goals = create_obstacle_goals(current_state, path_positions, actor_color, level)
+                    assert len(obstacle_goals) > 0, "No obstacles found in path"
+                                        
+                    helper_goal = goal_description.create_new_goal_description_of_same_type(obstacle_goals)
+                    
+                    helper_action_set = [[NoOp()] for _ in range(level.num_agents)]
+                    helper_action_set[helper_index] = action_library
+                    
+                    help_success, helper_plan = graph_search(current_state, helper_action_set, helper_goal, frontier)
+                    assert help_success, "Helper could not clear path"
+                    
+                    for helper_joint_action in helper_plan:
+                        send_joint_action(helper_joint_action)
+                        current_state = current_state.result(helper_joint_action)
+                    
+                    replanning_needed = True
+                    break  # Replan from new state
+                
+                if not replanning_needed:
+                    break  # Subgoal achieved, move to next
+
+
+
+# Helper functions
+def get_path_positions(monochrome_state, remaining_plan):
+    """Collect all positions the actor AND pushed boxes need to pass through"""
+    positions = set()
+    sim_state = monochrome_state
+    for joint_action in remaining_plan:
+        new_state = sim_state.result(joint_action)
+        # Actor positions
+        for pos, _ in new_state.agent_positions:
+            positions.add(pos)
+        # Box destinations - these also need to be free
+        for pos, _ in new_state.box_positions:
+            positions.add(pos)
+        sim_state = new_state
+    return positions
+
+
+def find_obstacle(current_state, path_positions, actor_color, level):
+    """Find the first non-actor-color object occupying a required-free position"""
+    for pos in path_positions:
+        _, char = current_state.object_at(pos)
+        if char != '' and level.colors.get(char) != actor_color:
+            return pos, char
+    return None, None
+
+def find_helper_index(obstacle_char, level, current_state):
+    """Find the agent index whose color matches the obstacle"""
+    obstacle_color = level.colors[obstacle_char]
+    for i, (_, agent_char) in enumerate(current_state.agent_positions):
+        if level.colors.get(agent_char) == obstacle_color:
+            return i
+    return -1
+
+def create_obstacle_goals(current_state, path_positions, actor_color, level):
+    """Only create negative goals for path positions actually occupied by helper objects"""
+    obstacle_goals = []
+    for pos in path_positions:
+        _, char = current_state.object_at(pos)
+        # Only add a goal if something non-actor-colored is actually there
+        if char != '' and level.colors.get(char) != actor_color:
+            obstacle_goals.append((pos, char, False))
+    return obstacle_goals
