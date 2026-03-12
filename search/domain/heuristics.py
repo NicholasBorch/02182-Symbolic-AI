@@ -32,6 +32,119 @@ class Heuristic(Protocol):
         ...
 
 
+class AdvancedGoalHeuristic():
+    def __init__(self, mode: str = "bfs"):
+        self.agent_distance_map : dict[str, dict[Position, int]] = {}
+        # For each box letter, a list of distance maps (one per goal of that letter)
+        # e.g. box_goal_maps['A'] = [dist_map_goal1, dist_map_goal2, ...]
+        self.box_goal_maps : dict[str, list[dict[Position, int]]] = {}
+        self._rows : int
+        self._cols : int
+        self.mode : str = mode
+        self.legal_positions : set[Position] = set()
+        self._preprocess_strategies = {
+            "manhattan": self._compute_distances_manhattan,
+            "bfs": self._compute_distances_bfs
+        }
+
+        if self.mode not in self._preprocess_strategies:
+            raise ValueError(f"Unsupported heuristic mode: {mode}. Supported modes are: {list(self._preprocess_strategies.keys())}")
+
+    def preprocess(self, level: Level):
+        """Precompute BFS/manhattan distance maps from each goal position."""
+
+        self.legal_positions = self._get_legal_positions(level.walls)
+        compute_fn = self._preprocess_strategies[self.mode]
+
+        # Agent goals: one distance map per agent label
+        agent_goal_positions = self._get_goal_positions(level.agent_goals)
+        for label, goal_pos in agent_goal_positions.items():
+            self.agent_distance_map[label] = compute_fn(goal_pos)
+
+        # Box goals: group by letter, store list of distance maps per letter
+        for goal_pos, char, is_positive in level.box_goals:
+            if not is_positive:
+                continue
+            if char not in self.box_goal_maps:
+                self.box_goal_maps[char] = []
+            self.box_goal_maps[char].append(compute_fn(goal_pos))
+
+
+    def h(self, state: State, goal_description: GoalDescription) -> int:
+        total_distance = 0
+
+        # Agent distances (unchanged)
+        for position, agent in state.agent_positions:
+            if agent in self.agent_distance_map:
+                total_distance += self.agent_distance_map[agent].get(position, 10**9)
+
+        # Group current box positions by letter
+        boxes_by_char: dict[str, list[Position]] = {}
+        for position, box_char in state.box_positions:
+            boxes_by_char.setdefault(box_char, []).append(position)
+
+        # For each box, find the minimum distance to any goal of the same letter
+        for position, box_char in state.box_positions:
+            if box_char not in self.box_goal_maps:
+                continue
+            min_dist = min(dm.get(position, 10**9) for dm in self.box_goal_maps[box_char])
+            total_distance += min_dist
+
+        return total_distance
+
+    def _compute_distances_manhattan(self, goal_pos: Position) -> dict[Position, int]:
+        distances = {}
+        for position in self.legal_positions:
+            distances[position] = self._manhattan_distance(position, goal_pos)
+        return distances
+
+    def _compute_distances_bfs(self, goal_pos: Position) -> dict[Position, int]:
+        return self._bfs_distance(goal_pos)
+
+
+    def _manhattan_distance(self, agent_position: Position, goal_position: Position) -> int:
+        """Computes the Manhattan distance between the agent and the goal."""
+        return abs(agent_position[0] - goal_position[0]) + abs(agent_position[1] - goal_position[1])
+    
+
+    def _bfs_distance(self, goal_position: Position) -> dict[Position, int]:
+        """Compute shortest path distances from goal position using BFS."""
+        queue = deque([goal_position])
+        position_distances_from_goal : dict[Position, int] = {goal_position: 0}
+
+        while queue:
+            row, column = queue.popleft()
+            position_distance = position_distances_from_goal[(row, column)]
+            
+            up, down, right, left = (row+1, column), (row-1, column), (row, column+1), (row, column-1)
+            for next_row, next_column in (up, down, right, left):
+                if (next_row, next_column) not in self.legal_positions:
+                    continue
+                if (next_row, next_column) in position_distances_from_goal:
+                    continue
+            
+                position_distances_from_goal[(next_row, next_column)] = position_distance + 1
+                queue.append((next_row, next_column))
+                
+        return position_distances_from_goal
+    
+    
+    def _get_goal_positions(self, goal_description: GoalDescription) -> dict[str, Position]:
+        goal_positions = {}
+        for position, agent, _ in goal_description:
+            goal_positions[agent] = position
+
+        return goal_positions
+    
+    def _get_legal_positions(self, walls: list[list[bool]]) -> set[Position]:        
+        legal_positions = set()
+        for row_index, row in enumerate(walls):
+            for col_index, cell in enumerate(row):
+                if cell == False:
+                    legal_positions.add(Position(row_index, col_index))
+
+        return legal_positions
+
 class GoalCountHeuristic:
     def __init__(self):
         pass
@@ -180,3 +293,4 @@ class AdvancedHeuristic:
                     legal_positions.add(Position(row_index, col_index))
 
         return legal_positions
+    

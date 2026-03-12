@@ -12,6 +12,10 @@ services:
     networks:
       - x11
     command: sleep infinity
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 56G
   novnc:
     image: theasp/novnc:latest
     environment:

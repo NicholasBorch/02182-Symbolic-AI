@@ -14,7 +14,7 @@ from search.domain.state import State
 from search.domain.level import Level, Position
 from search.domain.actions import Action, ActionSet, JointAction, ActionLibrary
 from search.domain.goal_description import GoalDescription
-from search.domain.heuristics import GoalCountHeuristic, AdvancedHeuristic
+from search.domain.heuristics import GoalCountHeuristic, AdvancedHeuristic, AdvancedGoalHeuristic
 
 __all__ = [
     "State",
@@ -26,5 +26,6 @@ __all__ = [
     "GoalDescription",
     "GoalCountHeuristic",
     "AdvancedHeuristic",
+    "AdvancedGoalHeuristic",
     "Position",
 ]

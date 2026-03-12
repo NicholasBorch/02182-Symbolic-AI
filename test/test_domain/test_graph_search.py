@@ -23,4 +23,3 @@ def test_mapf_levels_astar_advanced(level):
     
     output = result.stdout + result.stderr
     assert "Level solved: Yes" in output, f"Level {level_file} not solved!\n{output}"
-
