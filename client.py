@@ -25,6 +25,7 @@ from search.agents import (
     decentralised_agent,
     helper_agent,
     non_deterministic_agent,
+    non_deterministic_advanced_agent,
     goal_recognition_agent,
     robot_agent
 )
@@ -150,6 +151,18 @@ def create_parser():
         help="Select the results condition. Default is 'broken'"
     )
     
+    nondet_adv_parser = subparsers.add_parser(
+    "nondeterministic_advanced",
+    help="Non-deterministic agent with advanced nondeterminism",
+    parents=[and_or_graph_search_parent]
+    )
+    nondet_adv_parser.add_argument(
+    "--results",
+    choices=["slippery"],
+    default="slippery",
+    help="Select the results condition. Default is 'slippery'"
+    )
+    
     # Goal recognition agent subcommand
     goalrec_parser = subparsers.add_parser(
         "goalrecognition",
@@ -262,6 +275,8 @@ def main():
         helper_agent(level, action_library, frontier)
     elif agent_type_name == "nondeterministic":
         non_deterministic_agent(level, action_library, enable_iterative_deepening, allow_cyclic, results_function_key)
+    elif agent_type_name == "nondeterministic_advanced":
+        non_deterministic_advanced_agent(level, action_library, enable_iterative_deepening, allow_cyclic, results_function_key)
     elif agent_type_name == "goalrecognition":
         goal_recognition_agent(level, action_library, frontier, enable_iterative_deepening, allow_cyclic)
     elif agent_type_name == "robot":
