@@ -74,9 +74,6 @@ def and_or_graph_search(
                 best_status = LOOP
         
         return best_status
-                
- 
-    
  
     def and_search(states, path, depth_limit):
         any_cutoff = False
