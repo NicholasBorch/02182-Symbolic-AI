@@ -103,13 +103,13 @@ def and_or_graph_search(
         status = or_search(initial_state, [], d)
  
         if status == SUCCESS:
-            print_debug(f"AND-OR search found plan at depth {d}")
+            print_debug(f"AND-OR search: Search has found plan at depth {d}!")
             return d, policy
         elif status == FAILURE:
-            print_debug("AND-OR search: problem is unsolvable.")
+            print_debug("AND-OR search: Search problem is not to be solved!")
             return None, None
  
-        print_debug(f"AND-OR search: cutoff at depth {d}, trying deeper...")
+        print_debug(f"AND-OR search: Search was cutoff at depth {d}, We will try to go deeper")
  
-    print_debug("AND-OR search exceeded maximum recursion depth.")
+    print_debug("AND-OR search: Search has exceeded the maximum recursion depth!")
     return None, None
