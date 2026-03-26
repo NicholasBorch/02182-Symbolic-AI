@@ -158,10 +158,10 @@ def create_parser():
     )
     nondet_adv_parser.add_argument(
     "--results",
-    choices=["slippery"],
+    choices=["slippery", "fumble", "clumsy"],
     default="slippery",
-    help="Select the results condition. Default is 'slippery'"
-    )
+    help="Select the nondeterminism type."
+)
     
     # Goal recognition agent subcommand
     goalrec_parser = subparsers.add_parser(
