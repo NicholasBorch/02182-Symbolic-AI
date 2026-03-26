@@ -1,0 +1,21 @@
+#domain
+hospital
+#levelname
+MAhelperCustom
+#colors
+blue: 0, A
+red: 1, B
+orange: 2, C
+#initial
++++++++++++
++  ++++ A +
++0   CB 1 +
++  ++++ 2 +
++++++++++++
+#goal
++++++++++++
++  ++++   +
++         +
++  ++++ A +
++++++++++++
+#end
