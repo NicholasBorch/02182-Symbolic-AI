@@ -21,15 +21,74 @@ Using the robot agent type differs from previous agent types.
   - To connect to the robots, connect to the Pepper hotspot.
 """
 import math
-import time
+import re
 
+from faster_whisper import WhisperModel
 from search.algorithms.graph_search import graph_search
 from search.domain import Level, ActionLibrary
 from search.frontiers import Frontier
 from robot.robot_client import RobotClient
-from domain.actions import ROBOT_ACTION_LIBRARY
+from search.domain.actions import ROBOT_ACTION_LIBRARY
 
-HUMAN = None
+HUMAN = True
+
+whisper_model = WhisperModel(
+    "distil-small.en",
+    device="cpu",
+    compute_type="int8",
+    download_root="tmp/whisper_models",
+)
+
+DIRECTION_PATTERNS = [
+    (re.compile(r"\b(go\s+)?(north|up|forward)\b", re.IGNORECASE),    "Move(N)"),
+    (re.compile(r"\b(go\s+)?(south|down|backward|back)\b", re.IGNORECASE), "Move(S)"),
+    (re.compile(r"\b(go\s+)?(east|right)\b", re.IGNORECASE),          "Move(E)"),
+    (re.compile(r"\b(go\s+)?(west|left)\b", re.IGNORECASE),           "Move(W)"),
+    (re.compile(r"\bpush\s+(north|up)\b", re.IGNORECASE),    "Push(N,N)"),
+    (re.compile(r"\bpush\s+(south|down)\b", re.IGNORECASE),  "Push(S,S)"),
+    (re.compile(r"\bpush\s+(east|right)\b", re.IGNORECASE),  "Push(E,E)"),
+    (re.compile(r"\bpush\s+(west|left)\b", re.IGNORECASE),   "Push(W,W)"),
+]
+
+def parse_command(text: str) -> tuple[str, str] | None:
+    """Return (action_name, matched_text) or None from transcribed text."""
+    for pattern, action in DIRECTION_PATTERNS:
+        match = pattern.search(text)
+        if match:
+            return (action, match.group(0))
+    return None
+
+
+def execute_action(robot: RobotClient, action_name: str, current_angle: int) -> int:
+    """Turn Pepper to face the correct direction and move forward. Returns the new angle."""
+    if action_name.startswith("Pull"):
+        raise ValueError("The robot physically cannot perform a Pull action.")
+
+    robot.declare_direction(action_name)
+    target_angle = robot.direction_mapping[action_name]
+    angle_difference = (target_angle - current_angle) % 360
+
+    if angle_difference != 0:
+        if angle_difference <= 180:
+            robot.turn_counter_clockwise(math.radians(angle_difference))
+        else:
+            robot.turn_clockwise(math.radians(360 - angle_difference))
+
+    robot.forward(0.55)
+    robot.stand()
+    return target_angle
+
+
+def listen_and_transcribe(robot: RobotClient, duration: int = 2) -> str:
+    robot.say("I am listening")
+    robot.listen(duration=duration)
+
+    audio_file = "tmp/test.wav"
+    segments, info = whisper_model.transcribe(audio_file, beam_size=5)
+
+    text = " ".join(segment.text.strip() for segment in segments)
+    print(f"Transcribed ({info.language}): {text}")
+    return text
 
 def robot_agent(
     level: Level,
@@ -46,17 +105,18 @@ def robot_agent(
     action_set = [action_library] * level.num_agents
     
     # Run the graph search algorithm to find a plan for the robot to execute
-    success, plan = graph_search(
-            initial_state, 
-            action_set, 
-            goal_description, 
-            frontier
-        )
+    if not HUMAN:
+        success, plan = graph_search(
+                initial_state, 
+                action_set, 
+                goal_description, 
+                frontier
+            )
     
-    print(plan)
-    if not success:
-        print("Failed to find a solution to the level.")
-        return None
+        print(plan)
+        if not success:
+            print("Failed to find a solution to the level.")
+            return None
     
     # You can delete the following line (it is used to silence the type checker)
     _ = initial_state, goal_description
@@ -67,49 +127,32 @@ def robot_agent(
     
     # Initialize the robot client
     robot = RobotClient(robot_ip, vision=True)
-    if HUMAN:
-        # Communicate using its speech synthesis
-        robot.say("Hello I am Pepper!")
+    current_angle = 0
 
-        # Drive 0.2 meters forward and backwards
-        robot.forward(0.2)
-        robot.backward(0.2)
-        
-        # Turn around 30 degrees back and forth
-        theta = math.radians(30)
-        robot.turn_counter_clockwise(theta)
-        robot.turn_clockwise(theta)
-    
+    if HUMAN:
+        while True:
+            robot.say("What do you want me to do?")
+
+            transcribed_text = listen_and_transcribe(robot, duration=5)
+            command = parse_command(transcribed_text)
+
+            if command is None:
+                robot.say("Sorry, I did not understand that.")
+            else:
+                action_name, matched = command
+                print(f"Command: {action_name} (matched: '{matched}')")
+                robot.say(f"Okay, I will go {matched}")
+                current_angle = execute_action(robot, action_name, current_angle)
+
     try:
-        current_angle = 0
-        
         for joint_action in plan:
-            action = joint_action[0]
-            action_name = action.name
-            
+            action_name = joint_action[0].name
+
             if action_name == "NoOp":
                 robot.stand()
                 continue
-            
-            robot.declare_direction(action_name)
-            target_angle = robot.direction_mapping[action_name]
-            angle_difference = (target_angle - current_angle) % 360
-            
-            if angle_difference != 0:
-                if angle_difference <= 180:
-                    robot.turn_counter_clockwise(math.radians(angle_difference))
-                else:
-                    robot.turn_clockwise(math.radians(360 - angle_difference))
-                current_angle = target_angle
-                
-            if action_name.startswith("Pull"):
-                print("Can't pull")
-                raise ValueError("The robot physically cannot perform a Pull action.")
-            else:
-                robot.forward(0.55)
-                
-            robot.stand()
-            time.sleep(1)
+
+            current_angle = execute_action(robot, action_name, current_angle)
 
     except Exception as e:
         print("Robot agent terminated with error", e)
@@ -117,3 +160,4 @@ def robot_agent(
         raise
     
     robot.shutdown()
+    
