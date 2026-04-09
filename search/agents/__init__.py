@@ -18,6 +18,7 @@ from search.agents.decentralised import decentralised_agent
 from search.agents.helper import helper_agent
 from search.agents.goal_recognition import goal_recognition_agent
 from search.agents.non_deterministic import non_deterministic_agent
+from search.agents.non_deterministic_advanced import non_deterministic_advanced_agent
 from search.agents.robot import robot_agent
 
 __all__ = [

@@ -31,6 +31,7 @@ MAX_RECURSION = 496
 SUCCESS = "SUCCESS"
 FAILURE = "FAILURE"
 CUTOFF  = "CUTOFF"
+LOOP = "LOOP" # Cyclic solutions
 
 def and_or_graph_search(
     initial_state: State|GoalRecognitionNode,
@@ -49,12 +50,12 @@ def and_or_graph_search(
         if goal_test(state):
             return SUCCESS
         if state in path:
-            return FAILURE
+            return LOOP if allow_cyclic else FAILURE
         if depth_limit is not None and depth_limit == 0:
             return CUTOFF
  
         new_path = path + [state]
-        any_cutoff = False
+        best_status = FAILURE
  
         for joint_action in product(*action_set):
             if not state.is_applicable(joint_action):
@@ -68,12 +69,15 @@ def and_or_graph_search(
                 policy[state] = joint_action
                 return SUCCESS
             elif status == CUTOFF:
-                any_cutoff = True
- 
-        return CUTOFF if any_cutoff else FAILURE
+                best_status = CUTOFF
+            elif status == LOOP and best_status == FAILURE:
+                best_status = LOOP
+        
+        return best_status
  
     def and_search(states, path, depth_limit):
         any_cutoff = False
+        has_success = False
  
         for outcome_state in states:
             status = or_search(outcome_state, path, depth_limit)
@@ -81,8 +85,14 @@ def and_or_graph_search(
                 return FAILURE
             elif status == CUTOFF:
                 any_cutoff = True
+            elif status == SUCCESS:
+                has_success = True
  
-        return CUTOFF if any_cutoff else SUCCESS
+        if any_cutoff:
+            return CUTOFF
+        if has_success:
+            return SUCCESS
+        return LOOP
  
     if not iterative_deepening:
         status = or_search(initial_state, [], None)
@@ -93,13 +103,13 @@ def and_or_graph_search(
         status = or_search(initial_state, [], d)
  
         if status == SUCCESS:
-            print_debug(f"AND-OR search found plan at depth {d}")
+            print_debug(f"AND-OR search: Search has found plan at depth {d}!")
             return d, policy
         elif status == FAILURE:
-            print_debug("AND-OR search: problem is unsolvable.")
+            print_debug("AND-OR search: Search problem is not to be solved!")
             return None, None
  
-        print_debug(f"AND-OR search: cutoff at depth {d}, trying deeper...")
+        print_debug(f"AND-OR search: Search was cutoff at depth {d}, We will try to go deeper")
  
-    print_debug("AND-OR search exceeded maximum recursion depth.")
+    print_debug("AND-OR search: Search has exceeded the maximum recursion depth!")
     return None, None
