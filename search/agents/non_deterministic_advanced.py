@@ -3,13 +3,13 @@ import random
 
 from search import print_debug
 from search.domain import Level, State
-from search.domain.actions import Action, JointAction, Push, Move, NoOp
+from search.domain.actions import Action, JointAction, Push, Pull, Move, NoOp
 from search.algorithms.and_or_graph_search import and_or_graph_search
 from search.agents.server_communication import send_joint_action, joint_action_to_string
 
 
 # ============================================================
-# Slippery floor helpers
+# Helpers
 # ============================================================
 
 ORTHOGONAL = {
@@ -18,6 +18,8 @@ ORTHOGONAL = {
     "E": ["N", "S"],
     "W": ["N", "S"],
 }
+
+ALL_DIRECTIONS = ["N", "S", "E", "W"]
 
 
 def _get_agent_direction(action: Action) -> str:
@@ -28,6 +30,10 @@ def _get_box_direction(action: Action) -> str:
     return action.name.split(",")[1].strip(")")
 
 
+def _get_move_direction(action: Move) -> str:
+    return action.name.split("(")[1].strip(")")
+
+
 def _get_push_variants(action: Push) -> list[Push]:
     agent_dir = _get_agent_direction(action)
     box_dir = _get_box_direction(action)
@@ -35,6 +41,12 @@ def _get_push_variants(action: Push) -> list[Push]:
     for orth_dir in ORTHOGONAL[box_dir]:
         variants.append(Push(agent_dir, orth_dir))
     return variants
+
+
+def _get_pull_variants(action: Move) -> list[Pull]:
+    """Given Move(D), return all Pull(D, B) for every box direction B."""
+    move_dir = _get_move_direction(action)
+    return [Pull(move_dir, box_dir) for box_dir in ALL_DIRECTIONS]
 
 
 # ============================================================
@@ -87,8 +99,9 @@ def fumble_results(state: State, joint_action: JointAction) -> list[State]:
 
 def clumsy_results(state: State, joint_action: JointAction) -> list[State]:
     """
-    Clumsy agent: Move next to a box might accidentally push it.
-    Results(s, Move(D)) = { Result(s, Move(D)), Result(s, Push(D,D)) if applicable }
+    Clumsy agent: moving away from a box might accidentally drag it along.
+    Results(s, Move(D)) = { Result(s, Move(D)) }
+                          ∪ { Result(s, Pull(D,B)) | Pull(D,B) is applicable in s }
     Push and Pull actions are deterministic.
     """
     action = joint_action[0]
@@ -96,19 +109,21 @@ def clumsy_results(state: State, joint_action: JointAction) -> list[State]:
     if not isinstance(action, Move):
         return [state.result(joint_action)]
 
-    direction = action.name.split("(")[1].strip(")")
-
     standard_case = state.result(joint_action)
+    outcomes = [standard_case]
+    seen = {standard_case}
 
-    accidental_push = Push(direction, direction)
-    push_joint = (accidental_push,)
+    # Check all possible accidental pulls in the move direction
+    pull_variants = _get_pull_variants(action)
+    for pull in pull_variants:
+        pull_joint = (pull,)
+        if state.is_applicable(pull_joint):
+            result_state = state.result(pull_joint)
+            if result_state not in seen:
+                seen.add(result_state)
+                outcomes.append(result_state)
 
-    if state.is_applicable(push_joint):
-        bumped_case = state.result(push_joint)
-        if bumped_case != standard_case:
-            return [standard_case, bumped_case]
-
-    return [standard_case]
+    return outcomes
 
 
 results_functions = {
@@ -117,8 +132,8 @@ results_functions = {
     "clumsy": clumsy_results,
 }
 
-CHANCE_OF_FUMBLE = 0.3
-CHANCE_OF_BUMP = 0.3
+CHANCE_OF_FUMBLE = 0.5
+CHANCE_OF_DRAG = 0.5
 
 
 # ============================================================
@@ -166,13 +181,12 @@ def non_deterministic_advanced_agent(
         if isinstance(action, Push) and results_function == slippery_results:
             variants = _get_push_variants(action)
             applicable_variants = [
-                v for v in variants
+                (v,) for v in variants
                 if current_state.is_applicable((v,))
             ]
-            chosen = random.choice(applicable_variants)
-            chosen_joint = (chosen,)
+            chosen_joint = random.choice(applicable_variants)
 
-            if chosen != action:
+            if chosen_joint != joint_action:
                 print_debug(f"SLIP! Intended: {joint_action_to_string(joint_action)}, "
                             f"Actual: {joint_action_to_string(chosen_joint)}")
             else:
@@ -189,6 +203,7 @@ def non_deterministic_advanced_agent(
                 noop_joint = (NoOp(),)
                 _ = send_joint_action(noop_joint)
                 # State doesn't change
+
             else:
                 print_debug(joint_action_to_string(joint_action))
                 _ = send_joint_action(joint_action)
@@ -196,21 +211,25 @@ def non_deterministic_advanced_agent(
 
         # --- Clumsy execution ---
         elif isinstance(action, Move) and results_function == clumsy_results:
-            direction = action.name.split("(")[1].strip(")")
-            accidental_push = Push(direction, direction)
-            push_joint = (accidental_push,)
+            # Check for applicable accidental pulls
+            pull_variants = _get_pull_variants(action)
+            applicable_pulls = [
+                (p,) for p in pull_variants
+                if current_state.is_applicable((p,))
+            ]
 
-            if current_state.is_applicable(push_joint) and random.random() < CHANCE_OF_BUMP:
-                print_debug(f"BUMP! Intended: {joint_action_to_string(joint_action)}, "
-                            f"Actual: {joint_action_to_string(push_joint)}")
-                _ = send_joint_action(push_joint)
-                current_state = current_state.result(push_joint)
+            if applicable_pulls and random.random() < CHANCE_OF_DRAG:
+                chosen_joint = random.choice(applicable_pulls)
+                print_debug(f"DRAG! Intended: {joint_action_to_string(joint_action)}, "
+                            f"Actual: {joint_action_to_string(chosen_joint)}")
+                _ = send_joint_action(chosen_joint)
+                current_state = current_state.result(chosen_joint)
             else:
                 print_debug(joint_action_to_string(joint_action))
                 _ = send_joint_action(joint_action)
                 current_state = current_state.result(joint_action)
 
-        # --- Deterministic execution (Move, Pull, NoOp) ---
+        # --- Deterministic execution (Push, Pull, NoOp in non-matching mode) ---
         else:
             print_debug(joint_action_to_string(joint_action))
             _ = send_joint_action(joint_action)

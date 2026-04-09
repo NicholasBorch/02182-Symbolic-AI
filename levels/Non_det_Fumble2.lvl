@@ -1,0 +1,15 @@
+#domain
+hospital
+#levelname
+Non_det_Fumble2
+#colors
+blue: 0, A, B
+#initial
+++++++++++
++0  A  B +
+++++++++++
+#goal
+++++++++++
++      AB+
+++++++++++
+#end

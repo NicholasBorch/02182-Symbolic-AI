@@ -1,0 +1,19 @@
+#domain
+hospital
+#levelname
+Non_det_Clumsy2
+#colors
+blue: 0, A
+#initial
++++++++
++  A  +
++  0  +
++     +
++++++++
+#goal
++++++++
++     +
++     +
++   A +
++++++++
+#end
