@@ -15,15 +15,16 @@ def parse_result(entry: dict) -> dict:
     time_match = re.search(r"Time to solve:\s*([\d.]+)\s*seconds", stdout)
     time_s = float(time_match.group(1)) if time_match else None
 
-<<<<<<< HEAD
     # Solution length: from stdout "[server][info] Actions used: 14." or "2,461."
     actions_match = re.search(r"Actions used:\s*([\d,]+)", stdout)
     solution_length = int(actions_match.group(1).replace(",", "")) if actions_match else None
-=======
-    # Solution length: from stdout "[server][info] Actions used: 14."
-    actions_match = re.search(r"Actions used:\s*(\d+)", stdout)
-    solution_length = int(actions_match.group(1)) if actions_match else None
->>>>>>> 842a3cc (New stuff)
+    
+    # Level solved
+    level_solved = re.search(r"(?<=Level solved: )(Yes|No)", stdout)
+    if level_solved:
+        solved = level_solved.group(0)  # "Yes" or "No"
+    else:
+        solved = "Unknown"
 
     # Mark timeouts explicitly
     if stdout == "Timeout":
@@ -37,9 +38,10 @@ def parse_result(entry: dict) -> dict:
         "Level": entry["level"],
         "Strategy": entry["strategy"].upper(),
         "Heuristic": heuristic,
+        "Level solved": solved,
         "States Generated": states_generated,
         "Time/s": time_s,
-        "Solution length": solution_length,
+        "Steps": solution_length,
     }
 
 
@@ -48,11 +50,8 @@ def load_results(filepath: str) -> pd.DataFrame:
         data = json.load(f)
 
     rows = [parse_result(entry) for entry in data.values()]
-    df = pd.DataFrame(rows, columns=["Level", "Strategy", "Heuristic", "States Generated", "Time/s", "Solution length"])
-<<<<<<< HEAD
+    df = pd.DataFrame(rows, columns=["Level", "Strategy", "Heuristic","Level solved", "States Generated", "Time/s", "Steps"])
     df["States Generated"] = pd.to_numeric(df["States Generated"], errors='coerce').astype("Int64")
-=======
->>>>>>> 842a3cc (New stuff)
     return df
 
 
@@ -62,25 +61,15 @@ if __name__ == "__main__":
         # print(f"Results for exercise {index}:")
         # print(df.to_string(index=False))
         # print("\n")
-    
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> b620f7d (results)
     # df = load_results("exercise4_results.json")
     # print(df[df['Heuristic'] == "ADVANCED"]) 
     df_ex2 = load_results("exercise2_results.json")
     df_ex3 = load_results("exercise3_results.json")
     df_ex4 = load_results("exercise4_results.json")
     df_ex5 = load_results("exercise5_results.json")
+    df_ex1_mavis2 = load_results("exercise1_results_mavis2.json")
+    df_ex1_mavis2.drop(columns='Heuristic')
+
     
-    
-<<<<<<< HEAD
     pd.concat([df_ex2, df_ex3]).drop(columns=['Heuristic'])
-=======
-    df = load_results("exercise4_results.json")
-    print(df[df['Heuristic'] == "ADVANCED"]) 
->>>>>>> 842a3cc (New stuff)
-=======
     pd.concat([df_ex2, df_ex3]).drop(columns=['Heuristic'])
->>>>>>> b620f7d (results)
