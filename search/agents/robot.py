@@ -22,15 +22,18 @@ Using the robot agent type differs from previous agent types.
 """
 import math
 import re
+import sys
+import time
 
 from faster_whisper import WhisperModel
 from search.algorithms.graph_search import graph_search
 from search.domain import Level, ActionLibrary
+from search.domain.goal_description import GoalDescription
 from search.frontiers import Frontier
 from robot.robot_client import RobotClient
 from search.domain.actions import ROBOT_ACTION_LIBRARY
 
-HUMAN = True
+HUMAN = False
 
 whisper_model = WhisperModel(
     "distil-small.en",
@@ -38,6 +41,11 @@ whisper_model = WhisperModel(
     compute_type="int8",
     download_root="tmp/whisper_models",
 )
+
+SOLVE_PATTERNS = [
+    (re.compile(r"\bfirst\b", re.IGNORECASE), 'A'),
+    (re.compile(r"\bsecond\b", re.IGNORECASE), 'B'),
+]
 
 DIRECTION_PATTERNS = [
     (re.compile(r"\b(go\s+)?(north|up|forward)\b", re.IGNORECASE),    "Move(N)"),
@@ -49,6 +57,14 @@ DIRECTION_PATTERNS = [
     (re.compile(r"\bpush\s+(east|right)\b", re.IGNORECASE),  "Push(E,E)"),
     (re.compile(r"\bpush\s+(west|left)\b", re.IGNORECASE),   "Push(W,W)"),
 ]
+
+def parse_solve_command(text: str) -> str | None:
+    """Return box character ('A' or 'B') or None."""
+    for pattern, box_char in SOLVE_PATTERNS:
+        if pattern.search(text):
+            return box_char
+    return None
+
 
 def parse_command(text: str) -> tuple[str, str] | None:
     """Return (action_name, matched_text) or None from transcribed text."""
@@ -74,20 +90,23 @@ def execute_action(robot: RobotClient, action_name: str, current_angle: int) -> 
         else:
             robot.turn_clockwise(math.radians(360 - angle_difference))
 
-    robot.forward(0.55)
-    robot.stand()
+    if action_name.startswith("Push"):
+        robot.forward(0.75)
+        robot.backward(0.2)
+    else:
+        robot.forward(0.55)
     return target_angle
 
 
 def listen_and_transcribe(robot: RobotClient, duration: int = 2) -> str:
-    robot.say("I am listening")
+    time.sleep(0.5)
     robot.listen(duration=duration)
 
     audio_file = "tmp/test.wav"
     segments, info = whisper_model.transcribe(audio_file, beam_size=5)
 
     text = " ".join(segment.text.strip() for segment in segments)
-    print(f"Transcribed ({info.language}): {text}")
+    print(f"[whisper] lang={info.language} text={repr(text)}", file=sys.stderr)
     return text
 
 def robot_agent(
@@ -118,29 +137,44 @@ def robot_agent(
             print("Failed to find a solution to the level.")
             return None
     
-    # You can delete the following line (it is used to silence the type checker)
-    _ = initial_state, goal_description
-    
-    # Write your robot agent type here
-    # What follows is a small example of how to interact with the robot.
-    # You should browse through 'robot/robot_client.py' to get a full overview of all the available functionality
-    
     # Initialize the robot client
     robot = RobotClient(robot_ip, vision=True)
     current_angle = 0
+    current_state = initial_state
 
     if HUMAN:
         while True:
             robot.say("What do you want me to do?")
-
+            robot.say("I am listening")
             transcribed_text = listen_and_transcribe(robot, duration=5)
-            command = parse_command(transcribed_text)
 
+            # Check for "solve A" / "solve B" commands
+            box_char = parse_solve_command(transcribed_text)
+            print(f"[parse] heard={repr(transcribed_text)} solve={box_char}", file=sys.stderr)
+            if box_char is not None:
+                box_goals = [g for g in goal_description.goals if g[1] == box_char]
+                box_goal_description = GoalDescription(level, box_goals)
+                robot.say(f"Solving for box {box_char}")
+                success, plan = graph_search(current_state, action_set, box_goal_description, frontier)
+                if not success:
+                    robot.say(f"Could not find a solution for box {box_char}.")
+                else:
+                    for joint_action in plan:
+                        action_name = joint_action[0].name
+                        if action_name == "NoOp":
+                            continue
+                        current_angle = execute_action(robot, action_name, current_angle)
+                    current_state = current_state.result_of_plan(plan)
+                    robot.say("Done")
+                continue
+
+            # Check for manual direction commands
+            command = parse_command(transcribed_text)
             if command is None:
                 robot.say("Sorry, I did not understand that.")
             else:
                 action_name, matched = command
-                print(f"Command: {action_name} (matched: '{matched}')")
+                print(f"[cmd] {action_name} (matched: '{matched}')", file=sys.stderr)
                 robot.say(f"Okay, I will go {matched}")
                 current_angle = execute_action(robot, action_name, current_angle)
 
