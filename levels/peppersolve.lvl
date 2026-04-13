@@ -1,0 +1,19 @@
+#domain
+hospital
+#levelname
+peppersolve
+#colors
+blue: 0, A, B
+#initial
++++++
++0  +
++ AB+
++   +
++++++
+#goal
++++++
++ AB+
++   +
++   +
++++++
+#end
