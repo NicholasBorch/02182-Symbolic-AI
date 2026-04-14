@@ -1,0 +1,20 @@
+{
+    "SAsoko1_08.lvl_nondeterministic": {
+        "level": "SAsoko1_08.lvl",
+        "strategy": "nondeterministic",
+        "stdout": "[server][info] Running client on level: levels/SAsoko1_08.lvl\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 6.\n[server][info] Time to solve: 0.011 seconds.\n",
+        "stderr": "AND-OR search: Search was cutoff at depth 0, We will try to go deeper\nAND-OR search: Search was cutoff at depth 1, We will try to go deeper\nAND-OR search: Search was cutoff at depth 2, We will try to go deeper\nAND-OR search: Search was cutoff at depth 3, We will try to go deeper\nAND-OR search: Search was cutoff at depth 4, We will try to go deeper\nAND-OR search: Search was cutoff at depth 5, We will try to go deeper\nAND-OR search: Search has found plan at depth 6!\nPush(E,E)\nPush(E,E)\nPush(E,E)\nOops! Extra Push(E,E)\nPush(E,E)\nOops! Extra Push(E,E)\n"
+    },
+    "ex3_clearlevel.lvl_nondeterministic": {
+        "level": "ex3_clearlevel.lvl",
+        "strategy": "nondeterministic",
+        "stdout": "[server][info] Running client on level: levels/ex3_clearlevel.lvl\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 9.\n[server][info] Time to solve: 1.888 seconds.\n",
+        "stderr": "AND-OR search: Search was cutoff at depth 0, We will try to go deeper\nAND-OR search: Search was cutoff at depth 1, We will try to go deeper\nAND-OR search: Search was cutoff at depth 2, We will try to go deeper\nAND-OR search: Search was cutoff at depth 3, We will try to go deeper\nAND-OR search: Search was cutoff at depth 4, We will try to go deeper\nAND-OR search: Search was cutoff at depth 5, We will try to go deeper\nAND-OR search: Search was cutoff at depth 6, We will try to go deeper\nAND-OR search: Search has found plan at depth 7!\nPush(E,S)\nPush(S,S)\nPush(S,S)\nOops! Extra Push(S,S)\nPush(S,S)\nPush(S,E)\nPush(E,N)\nPush(N,E)\nPush(E,S)\n"
+    },
+    "ex3_clutteredlevel.lvl_nondeterministic": {
+        "level": "ex3_clutteredlevel.lvl",
+        "strategy": "nondeterministic",
+        "stdout": "[server][info] Running client on level: levels/ex3_clutteredlevel.lvl\n[client][info] Waiting for client process to terminate by itself.\n[client][info] Client terminated.\n[server][info] Level solved: Yes.\n[server][info] Actions used: 14.\n[server][info] Time to solve: 9.206 seconds.\n",
+        "stderr": "AND-OR search: Search was cutoff at depth 0, We will try to go deeper\nAND-OR search: Search was cutoff at depth 1, We will try to go deeper\nAND-OR search: Search was cutoff at depth 2, We will try to go deeper\nAND-OR search: Search was cutoff at depth 3, We will try to go deeper\nAND-OR search: Search was cutoff at depth 4, We will try to go deeper\nAND-OR search: Search was cutoff at depth 5, We will try to go deeper\nAND-OR search: Search was cutoff at depth 6, We will try to go deeper\nAND-OR search: Search was cutoff at depth 7, We will try to go deeper\nAND-OR search: Search was cutoff at depth 8, We will try to go deeper\nAND-OR search: Search was cutoff at depth 9, We will try to go deeper\nAND-OR search: Search was cutoff at depth 10, We will try to go deeper\nAND-OR search: Search has found plan at depth 11!\nPush(E,E)\nPush(E,S)\nPush(S,S)\nOops! Extra Push(S,S)\nPull(E,N)\nPull(E,E)\nPull(S,E)\nPush(N,E)\nPush(E,E)\nOops! Extra Push(E,E)\nPull(S,W)\nPull(S,S)\nPull(E,S)\nPush(W,S)\n"
+    }
+}

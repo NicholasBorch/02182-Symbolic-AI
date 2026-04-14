@@ -71,9 +71,9 @@ def exercise1(timeout: int = 180, max_memory: str = "48g") -> Dict[str, Dict[str
         }
         print(f"Completed {level} (bfs)\n")
 
-    with open("exercise1_results_mavis2.json", "w") as f:
+    with open("data/exercise1_results_mavis2.json", "w") as f:
         json.dump(results, f, indent=4)
-    print("Exercise 1 results saved to exercise1_results_mavis2.json\n")
+    print("Exercise 1 results saved to data/exercise1_results_mavis2.json\n")
     return results
 
 
@@ -92,7 +92,6 @@ def run_helper(level: str, timeout: int = 180, max_memory: str = "48g") -> tuple
     cmd = [
         "java", "-jar", "server.jar",
         "-s", "300",
-        "-g",
         "-t", str(timeout),
         "-c", f"python3 client.py --max-memory {max_memory} helper",
         "-l", f"levels/{level}"
@@ -122,9 +121,9 @@ def exercise2(timeout: int = 180, max_memory: str = "48g") -> Dict[str, Dict[str
         }
         print(f"Completed {level} (helper)\n")
 
-    with open("exercise2_results_mavis2.json", "w") as f:
+    with open("data/exercise2_results_mavis2.json", "w") as f:
         json.dump(results, f, indent=4)
-    print("Exercise 2 results saved to exercise2_results_mavis2.json\n")
+    print("Exercise 2 results saved to data/exercise2_results_mavis2.json\n")
     return results
 
 
@@ -139,7 +138,6 @@ def run_nondeterministic(level: str, timeout: int = 180, max_memory: str = "48g"
     cmd = [
         "java", "-jar", "server.jar",
         "-s", "300",
-        "-g",
         "-t", str(timeout),
         "-c", f"python3 client.py --max-memory {max_memory} nondeterministic",
         "-l", f"levels/{level}"
@@ -169,9 +167,9 @@ def exercise3(timeout: int = 180, max_memory: str = "48g") -> Dict[str, Dict[str
         }
         print(f"Completed {level} (nondeterministic)\n")
 
-    with open("exercise3_results_mavis2.json", "w") as f:
+    with open("data/exercise3_results_mavis2.json", "w") as f:
         json.dump(results, f, indent=4)
-    print("Exercise 3 results saved to exercise3_results_mavis2.json\n")
+    print("Exercise 3 results saved to data/exercise3_results_mavis2.json\n")
     return results
 
 
@@ -192,7 +190,6 @@ def run_nondeterministic_cyclic(level: str, timeout: int = 180, max_memory: str 
     cmd = [
         "java", "-jar", "server.jar",
         "-s", "300",
-        "-g",
         "-t", str(timeout),
         "-c", f"python3 client.py --max-memory {max_memory} nondeterministic --cyclic",
         "-l", f"levels/{level}"
@@ -222,9 +219,9 @@ def exercise4(timeout: int = 180, max_memory: str = "48g") -> Dict[str, Dict[str
         }
         print(f"Completed {level} (nondeterministic --cyclic)\n")
 
-    with open("exercise4_results_mavis2.json", "w") as f:
+    with open("data/exercise4_results_mavis2.json", "w") as f:
         json.dump(results, f, indent=4)
-    print("Exercise 4 results saved to exercise4_results_mavis2.json\n")
+    print("Exercise 4 results saved to data/exercise4_results_mavis2.json\n")
     return results
 
 
