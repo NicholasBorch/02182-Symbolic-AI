@@ -164,9 +164,115 @@ def all_optimal_plans(
 
     frontier.add(root)
 
-    # Your implementation of ALL-OPTIMAL-PLANS goes here...
-    raise NotImplementedError()
+    all_nodes, goal_depths, max_depth = _build_optimal_plan_graph(
+        root, action_set, possible_goals, frontier
+    )
+
+    if max_depth is None:
+        return False, None
+
+    _label_consistent_goals(all_nodes, goal_depths)
+
     if visualize:
         visualize_solution_graph(root)
-        
+
     return True, root
+
+
+def _build_optimal_plan_graph(
+    root: MultiParentNode,
+    action_set: ActionSet,
+    possible_goals: list[GoalDescription],
+    frontier: Frontier[MultiParentNode],
+) -> tuple[dict[State, MultiParentNode], dict[GoalDescription, int], int | None]:
+    """
+    Run a modified BFS from ``root``, building a multi-parent DAG in which
+    every path from the root to a node satisfying some goal is an optimal
+    plan for that goal. Each generated node has its ``parent_action_pairs``
+    populated, and every parent's ``optimal_actions_and_results`` is updated
+    with the edges that lie on some optimal plan.
+
+    Returns the triple ``(all_nodes, goal_depths, max_depth)`` where
+    ``all_nodes`` maps each reached ``State`` to its ``MultiParentNode``,
+    ``goal_depths`` maps each satisfied goal to the depth of the shallowest
+    node satisfying it, and ``max_depth`` is the maximum over
+    ``goal_depths.values()``. ``max_depth`` is ``None`` iff the frontier was
+    exhausted before every goal could be satisfied.
+    """
+    all_nodes: dict[State, MultiParentNode] = {root.state: root}
+    goal_depths: dict[GoalDescription, int] = {}
+    remaining_goals: set[GoalDescription] = set(possible_goals)
+    max_depth: int | None = None
+    iterations = 0
+
+    while not frontier.is_empty():
+        if iterations % 10000 == 0 and iterations != 0:
+            print_search_status(set(all_nodes.keys()), frontier)
+        if memory_tracker.is_exceeded():
+            raise MemoryError("Maximum memory usage exceeded!")
+        iterations += 1
+
+        node = frontier.pop()
+        depth = node.path_cost
+
+        # Past the last optimal layer nothing new can be discovered.
+        if max_depth is not None and depth > max_depth:
+            break
+
+        # The first time a still-pending goal is satisfied by a popped node
+        # fixes that goal's optimal depth (BFS guarantees minimality).
+        for goal in [g for g in remaining_goals if g.is_goal(node.state)]:
+            goal_depths[goal] = depth
+            remaining_goals.remove(goal)
+        if not remaining_goals and max_depth is None:
+            max_depth = max(goal_depths.values()) if goal_depths else depth
+
+        # Children of a depth==max_depth node would be at depth+1 > max_depth
+        # and cannot lie on any optimal plan, so skip expansion.
+        if max_depth is not None and depth >= max_depth:
+            continue
+
+        for action in node.get_applicable_actions(action_set):
+            child_state = node.result(action)
+            existing = all_nodes.get(child_state)
+            if existing is None:
+                child = MultiParentNode(child_state)
+                child.parent_action_pairs.append((node, action))
+                node.optimal_actions_and_results[action] = child
+                all_nodes[child_state] = child
+                frontier.add(child)
+            elif existing.path_cost == depth + 1:
+                # A second optimal path of equal length reaches this state.
+                existing.parent_action_pairs.append((node, action))
+                node.optimal_actions_and_results[action] = existing
+            # else: existing was reached at a strictly smaller depth, so this
+            # edge is not on any optimal path -- ignore it.
+
+    return all_nodes, goal_depths, max_depth
+
+
+def _label_consistent_goals(
+    all_nodes: dict[State, MultiParentNode],
+    goal_depths: dict[GoalDescription, int],
+) -> None:
+    """
+    Seed every node that satisfies goal ``g`` at exactly ``goal_depths[g]``,
+    then propagate labels upwards along ``parent_action_pairs`` so that every
+    node on some optimal plan to ``g`` ends up with ``g`` in its
+    ``consistent_goals``.
+    """
+    queue: deque[MultiParentNode] = deque()
+    for node in all_nodes.values():
+        for goal, d in goal_depths.items():
+            if node.path_cost == d and goal.is_goal(node.state):
+                node.consistent_goals.add(goal)
+        if node.consistent_goals:
+            queue.append(node)
+
+    while queue:
+        node = queue.popleft()
+        for parent, _action in node.parent_action_pairs:
+            new_goals = node.consistent_goals - parent.consistent_goals
+            if new_goals:
+                parent.consistent_goals |= new_goals
+                queue.append(parent)
