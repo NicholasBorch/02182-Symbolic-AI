@@ -14,9 +14,9 @@ import socket
 import numpy as np
 import math
 import threading
+import time
 import cv2
 from pupil_apriltags import Detector
-
 
 
 class VideoStreamThread(threading.Thread):
@@ -37,6 +37,8 @@ class VideoStreamThread(threading.Thread):
         self.ip = ip
         self.frame = None
         self.closest_tag = None
+        self.tag_in_view = False
+        self.middle_bottom = None
 
         self.stop_event = threading.Event()
         self.vision_port = vision_port
@@ -54,24 +56,43 @@ class VideoStreamThread(threading.Thread):
     def run(self):
         while not self.stop_event.is_set():
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client_socket.connect((self.ip, self.vision_port))
+            client_socket.settimeout(2.0)
 
             try:
+                client_socket.connect((self.ip, self.vision_port))
+
                 # Get the image data
-                remaining = int.from_bytes(
-                    client_socket.recv(4), byteorder='little')
+                header = client_socket.recv(4)
+                if len(header) < 4:
+                    self.tag_in_view = False
+                    self.closest_tag = None
+                    continue
+
+                remaining = int.from_bytes(header, byteorder='little')
                 image_data = bytearray()
 
                 # Read the image data
                 while remaining > 0:
-                    data = client_socket.recv(remaining)
+                    data = client_socket.recv(min(remaining, 4096))
+                    if not data:
+                        break
                     remaining -= len(data)
                     image_data += data
+
+                if remaining > 0:
+                    self.tag_in_view = False
+                    self.closest_tag = None
+                    continue
 
                 # Decode the full image
                 image = cv2.imdecode(np.frombuffer(
                     image_data, np.uint8), cv2.IMREAD_COLOR)
-                
+
+                if image is None:
+                    self.tag_in_view = False
+                    self.closest_tag = None
+                    continue
+
                 # Set the frame so we can access it from the main thread
                 self.frame = {'image': image}
 
@@ -92,9 +113,10 @@ class VideoStreamThread(threading.Thread):
                 # Center of the closest tag initialized to the middle bottom of the image
                 tag_center = self.middle_bottom
                 tag_corners = None  # Corners of the closest tag
-                
+
                 if len(tags) == 0:
                     self.tag_in_view = False
+                    self.closest_tag = None
                     continue
 
                 # Go through each of the tags in the image found by the detector
@@ -126,11 +148,15 @@ class VideoStreamThread(threading.Thread):
                     self.tag_in_view = True
                 else:
                     self.tag_in_view = False
+                    self.closest_tag = None
 
-            except:
+            except (socket.timeout, ConnectionRefusedError, OSError):
+                self.tag_in_view = False
+                self.closest_tag = None
+                time.sleep(0.1)
                 continue
-
-            client_socket.close()
+            finally:
+                client_socket.close()
 
     def stop(self):
         self.stop_event.set()
