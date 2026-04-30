@@ -74,9 +74,20 @@ class GoalRecognitionNode:
         return applicable_actions
 
     def result(self, joint_action: JointAction) -> GoalRecognitionNode:
-        # The result method should return a new GoalRecognitionNode which contains the resulting state and the
-        # solution graph obtained from executing the joint_action in the current state.
-        raise NotImplementedError()
+        actor_action = joint_action[ACTOR_AGENT_INDEX]
+        new_state = self.state.result(joint_action)
+
+        actor_moved = (
+            actor_action in self.solution_graph.optimal_actions_and_results
+            and self.state.is_applicable(joint_action)
+            and not self.state.is_conflicting(joint_action)
+        )
+        if actor_moved:
+            new_solution_graph = self.solution_graph.optimal_actions_and_results[actor_action]
+        else:
+            new_solution_graph = self.solution_graph
+
+        return GoalRecognitionNode(new_state, new_solution_graph)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, self.__class__):
@@ -95,13 +106,29 @@ class GoalRecognitionNode:
 
 
 def solution_graph_results(
-    recognition_node: GoalRecognitionNode, helper_action: Action
+    recognition_node: GoalRecognitionNode, joint_action: JointAction
 ) -> list[GoalRecognitionNode]:
-    # This results method can be used as the 'results' function for the AND-OR graph-search.
-    # It takes a GoalRecognitionNode (or something else if you choose to not use the GoalRecognitionNode class) and
-    # the action taken by the helper, i.e., the chosen OR-branch.
-    # This function should then return all of the possible outcomes, i.e., the possible AND-nodes.
-    raise NotImplementedError()
+    helper_action = joint_action[HELPER_AGENT_INDEX]
+    num_agents = len(joint_action)
+
+    percepts = [
+        action
+        for action, child in recognition_node.solution_graph.optimal_actions_and_results.items()
+        if child.consistent_goals
+    ]
+    if not percepts:
+        percepts = [NoOp()]
+
+    outcomes = []
+    for actor_action in percepts:
+        ja = tuple(
+            actor_action if i == ACTOR_AGENT_INDEX
+            else helper_action if i == HELPER_AGENT_INDEX
+            else NoOp()
+            for i in range(num_agents)
+        )
+        outcomes.append(recognition_node.result(ja))
+    return outcomes
 
 
 def goal_recognition_agent(
@@ -114,12 +141,85 @@ def goal_recognition_agent(
     """
 
     """
-    # Get the initial state and goal description from the level
     initial_state = level.initial_state()
     goal_description = level.goal_description()
 
-    # You should implement your goal recognition agent type here. You can take inspiration on how to structure the code
-    # from your previous helper and non deterministic agent types.
-    # Note: Similarly to the non deterministic agent type, this is not a fast algorithm and you should therefore start
-    # by testing on very small levels, such as those found in the assignment.
-    raise NotImplementedError()
+    actor_char = level.initial_agent_positions[ACTOR_AGENT_INDEX][1]
+    actor_color = level.colors[actor_char]
+    actor_goal = goal_description.color_filter(actor_color)
+
+    current_state = initial_state
+    pending_indices = list(range(actor_goal.num_sub_goals()))
+
+    action_set: ActionSet = [[NoOp()] for _ in range(level.num_agents)]
+    action_set[HELPER_AGENT_INDEX] = action_library
+
+    while pending_indices:
+        pending_subgoals = [actor_goal.get_sub_goal(i) for i in pending_indices]
+
+        chosen_idx = random.choice(pending_indices)
+        actor_chosen = actor_goal.get_sub_goal(chosen_idx)
+
+        monochrome_state = current_state.color_filter(actor_color)
+        ok, root_sg = all_optimal_plans(
+            monochrome_state, [action_library], pending_subgoals, frontier
+        )
+        assert ok, "All-Optimal-Plans failed to find a solution graph"
+
+        disjunctive = DisjunctiveGoalDescription(pending_subgoals)
+        gr_root = GoalRecognitionNode(current_state, root_sg)
+
+        _, policy = and_or_graph_search(
+            gr_root,
+            action_set,
+            disjunctive.is_goal,
+            solution_graph_results,
+            iterative_deepening,
+            allow_cyclic,
+        )
+        if policy is None:
+            print_debug("Helper failed to find a contingent plan")
+            return
+
+        gr_current = gr_root
+        while not actor_chosen.is_goal(current_state):
+            if gr_current not in policy:
+                _, policy = and_or_graph_search(
+                    gr_current,
+                    action_set,
+                    disjunctive.is_goal,
+                    solution_graph_results,
+                    iterative_deepening,
+                    allow_cyclic,
+                )
+                if policy is None or gr_current not in policy:
+                    print_debug("Helper lost coverage of current state")
+                    return
+
+            helper_joint = policy[gr_current]
+            helper_action = helper_joint[HELPER_AGENT_INDEX]
+
+            choices = gr_current.solution_graph.get_actions_and_results_consistent_with_goal(
+                actor_chosen
+            )
+            if choices:
+                actor_action, next_sg = random.choice(choices)
+            else:
+                actor_action, next_sg = NoOp(), gr_current.solution_graph
+
+            joint_action = tuple(
+                actor_action if i == ACTOR_AGENT_INDEX
+                else helper_action if i == HELPER_AGENT_INDEX
+                else NoOp()
+                for i in range(level.num_agents)
+            )
+
+            successes = send_joint_action(joint_action)
+            current_state = current_state.result(joint_action)
+
+            if successes[ACTOR_AGENT_INDEX]:
+                gr_current = GoalRecognitionNode(current_state, next_sg)
+            else:
+                gr_current = GoalRecognitionNode(current_state, gr_current.solution_graph)
+
+        pending_indices.remove(chosen_idx)
