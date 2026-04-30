@@ -62,6 +62,9 @@ class GoalRecognitionNode:
         self.state = state
         self.solution_graph = solution_graph
 
+    def is_applicable(self, joint_action: JointAction) -> bool:
+        return self.state.is_applicable(joint_action)
+
     def get_applicable_actions(self, action_set: ActionSet) -> list[Action]:
         # Here we are only interested in the actions of the helper, but state.get_applicable_actions will return a list
         # of joint actions, where the actor action is always NoOp().
@@ -75,18 +78,25 @@ class GoalRecognitionNode:
 
     def result(self, joint_action: JointAction) -> GoalRecognitionNode:
         actor_action = joint_action[ACTOR_AGENT_INDEX]
-        new_state = self.state.result(joint_action)
 
-        actor_moved = (
-            actor_action in self.solution_graph.optimal_actions_and_results
-            and self.state.is_applicable(joint_action)
-            and not self.state.is_conflicting(joint_action)
-        )
-        if actor_moved:
+        conflicting = self.state.is_conflicting(joint_action)
+        actor_applicable = self.state.is_applicable(joint_action)
+        actor_in_sg = actor_action in self.solution_graph.optimal_actions_and_results
+
+        if conflicting:
+            effective_ja = tuple(NoOp() for _ in range(len(joint_action)))
+            new_solution_graph = self.solution_graph
+        elif actor_in_sg and actor_applicable:
+            effective_ja = joint_action
             new_solution_graph = self.solution_graph.optimal_actions_and_results[actor_action]
         else:
+            effective_ja = tuple(
+                NoOp() if i == ACTOR_AGENT_INDEX else joint_action[i]
+                for i in range(len(joint_action))
+            )
             new_solution_graph = self.solution_graph
 
+        new_state = self.state.result(effective_ja)
         return GoalRecognitionNode(new_state, new_solution_graph)
 
     def __eq__(self, other) -> bool:
@@ -215,7 +225,11 @@ def goal_recognition_agent(
             )
 
             successes = send_joint_action(joint_action)
-            current_state = current_state.result(joint_action)
+            effective_ja = tuple(
+                joint_action[i] if successes[i] else NoOp()
+                for i in range(level.num_agents)
+            )
+            current_state = current_state.result(effective_ja)
 
             if successes[ACTOR_AGENT_INDEX]:
                 gr_current = GoalRecognitionNode(current_state, next_sg)
