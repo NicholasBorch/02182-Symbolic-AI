@@ -166,11 +166,22 @@ def goal_recognition_agent(
 
     while pending_indices:
         pending_subgoals = [actor_goal.get_sub_goal(i) for i in pending_indices]
-
         chosen_idx = random.choice(pending_indices)
         actor_chosen = actor_goal.get_sub_goal(chosen_idx)
 
         monochrome_state = current_state.color_filter(actor_color)
+        
+        # Remove completed boxes from monochrome state so planner cannot move them
+        completed_positions = set()
+        for i in range(actor_goal.num_sub_goals()):
+            if i not in pending_indices:
+                for pos, char, _ in actor_goal.get_sub_goal(i).goals:
+                    completed_positions.add(pos)
+        monochrome_state.box_positions = [
+            (pos, char) for pos, char in monochrome_state.box_positions
+            if pos not in completed_positions
+        ]
+
         ok, root_sg = all_optimal_plans(
             monochrome_state, [action_library], pending_subgoals, frontier
         )
