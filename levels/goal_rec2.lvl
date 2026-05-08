@@ -1,0 +1,24 @@
+#domain
+hospital
+#levelname
+Goal Recognition Demonstration
+#colors
+red: 0, A, B
+green: 1, C
+#initial
+++++
+++ ++++++
+++CA    +
++    +01+
+++CB    +
+++ ++++++
+++++
+#goal
+++++
+++A++++++
+++      +
++    +  +
+++      +
+++B++++++
+++++
+#end
