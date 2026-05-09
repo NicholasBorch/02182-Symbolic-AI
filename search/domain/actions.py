@@ -174,7 +174,8 @@ class Push(Action):
         )
         box_index, box_char = state.box_at(new_agent_position)
         state.agent_positions[agent_index] = (new_agent_position, agent_char)
-        state.box_positions[box_index] = (new_box_position, box_char)
+        if box_index >= 0:
+            state.box_positions[box_index] = (new_box_position, box_char)
 
     def conflicts(self, agent_index: int, state: State):
         current_agent_position, agent_char = state.agent_positions[agent_index]
@@ -216,7 +217,8 @@ class Pull(Action):
         )
         box_index, box_char = state.box_at(current_box_position)
         state.agent_positions[agent_index] = (new_agent_position, agent_char)
-        state.box_positions[box_index] = (current_agent_position, box_char)
+        if box_index >= 0:
+            state.box_positions[box_index] = (current_agent_position, box_char)
 
     def conflicts(self, agent_index: int, state: State):
         current_agent_position, _ = state.agent_positions[agent_index]

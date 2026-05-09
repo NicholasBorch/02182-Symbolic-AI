@@ -3,19 +3,19 @@ hospital
 #levelname
 MAhelperCustom
 #colors
-blue: 0, A
+blue: 0
 red: 1, B
 orange: 2, C
 #initial
 +++++++++++
-+  ++++ A +
++  +++    +
 +0   BC 1 +
-+  ++++ 2 +
++  +++2   +
 +++++++++++
 #goal
 +++++++++++
-+  ++++   +
-+         +
-+  ++++ A +
++  +++    +
++        0+
++  +++    +
 +++++++++++
 #end

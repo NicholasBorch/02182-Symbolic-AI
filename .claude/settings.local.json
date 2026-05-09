@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Read(//workspaces/**)",
-      "Bash(ls /workspaces/)"
+      "Bash(ls /workspaces/)",
+      "Bash(python3 -c \"from search.agents.goal_recognition import goal_recognition_agent, HelperNGoalRecognitionNode, make_helper_n_results; print\\('Import OK'\\)\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('search/agents/goal_recognition.py'\\).read\\(\\)\\); print\\('Parse OK'\\)\")"
     ]
   }
 }

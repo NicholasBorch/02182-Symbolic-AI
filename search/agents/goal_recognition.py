@@ -129,11 +129,19 @@ class HelperNGoalRecognitionNode:
     Helper N branches on the actor's nondeterminism (from solution_graph),
     and for each actor percept, looks up Helper (N-1)'s action and advances
     the Helper (N-1) plan node accordingly.
+
+    For hash/eq we only use helper N's own color-filtered positions plus
+    helper_prev_node, because agents 0..N-1's positions are already encoded
+    in helper_prev_node.state. This shrinks the effective state space from
+    O(full_physical_states × policy_states) to O(helper_N_positions × policy_states).
     """
 
-    def __init__(self, state: State, helper_prev_node: GoalRecognitionNode | HelperNGoalRecognitionNode) -> None:
+    def __init__(self, state: State, helper_prev_node: GoalRecognitionNode | HelperNGoalRecognitionNode, helper_color: str) -> None:
         self.state = state
         self.helper_prev_node = helper_prev_node
+        self.helper_color = helper_color
+        # Only hash/eq on helper N's own objects + prev node
+        self._key_state = state.color_filter(helper_color)
 
     def is_applicable(self, joint_action: JointAction) -> bool:
         return self.state.is_applicable(joint_action)
@@ -147,7 +155,7 @@ class HelperNGoalRecognitionNode:
 
     def __eq__(self, other) -> bool:
         if isinstance(other, self.__class__):
-            return self.state == other.state and self.helper_prev_node == other.helper_prev_node
+            return self._key_state == other._key_state and self.helper_prev_node == other.helper_prev_node
         else:
             return False
 
@@ -155,7 +163,7 @@ class HelperNGoalRecognitionNode:
         return not self.__eq__(other)
 
     def __hash__(self) -> int:
-        return hash((self.state, self.helper_prev_node))
+        return hash((self._key_state, self.helper_prev_node))
 
 
 def solution_graph_results(
@@ -188,6 +196,7 @@ def make_helper_n_results(
     helper_level: int,
     prev_helper_policy: HelperPolicy,
     prev_helper_results_fn: ResultsFunction | None = None,
+    helper_color: str = None,
 ) -> ResultsFunction:
     """
     Factory for creating a results function for Helper N (N >= 2).
@@ -243,10 +252,28 @@ def make_helper_n_results(
                 for i in range(num_agents)
             )
 
-            new_physical_state = state.state.result(ja)
-            prev_next_node = prev_outcomes[idx] if idx < len(prev_outcomes) else prev_outcomes[-1]
+            # Check applicability in the physical state before applying.
+            # If a previous helper is blocked (e.g., helper1 blocked by helper N),
+            # fall back to applying only the actor + helper N action and keep the
+            # previous helper's plan node unchanged so it retries next time step.
+            if state.state.is_applicable(ja) and not state.state.is_conflicting(ja):
+                new_physical_state = state.state.result(ja)
+                prev_next_node = prev_outcomes[idx] if idx < len(prev_outcomes) else prev_outcomes[-1]
+            else:
+                ja_safe = tuple(
+                    actor_action if i == ACTOR_AGENT_INDEX
+                    else NoOp() if 0 < i < helper_level
+                    else joint_action[i] if i == helper_level
+                    else NoOp()
+                    for i in range(num_agents)
+                )
+                if state.state.is_applicable(ja_safe) and not state.state.is_conflicting(ja_safe):
+                    new_physical_state = state.state.result(ja_safe)
+                else:
+                    new_physical_state = state.state.result(tuple(NoOp() for _ in range(num_agents)))
+                prev_next_node = prev_node
 
-            new_state = HelperNGoalRecognitionNode(new_physical_state, prev_next_node)
+            new_state = HelperNGoalRecognitionNode(new_physical_state, prev_next_node, helper_color)
             outcomes.append(new_state)
 
         return outcomes
@@ -366,25 +393,31 @@ def goal_recognition_agent(
         current_root = gr_root
 
         for helper_idx in range(2, level.num_agents):
-            print_debug(f"[GR] Planning Helper {helper_idx}...")
+            hcolor = helper_colors[helper_idx - 1]
             k_colors = [actor_color] + helper_colors[:helper_idx]
             helper_n_root = HelperNGoalRecognitionNode(
-                current_state.color_filter_multi(k_colors), current_root
+                current_state.color_filter_multi(k_colors), current_root, hcolor
             )
             helper_n_results_fn = make_helper_n_results(
                 helper_idx,
                 policies[helper_idx - 1],
                 results_fns.get(helper_idx - 1),
+                hcolor,
             )
             results_fns[helper_idx] = helper_n_results_fn
 
+            # Check if helper (N-1)'s plan is already executable without helper N
+            # by testing whether helper_n_root is immediately a goal or already covered.
+            # If helper N-1 reached a success without needing helper N's help, skip.
+            # Full check: run AND-OR from helper_n_root; if it fails, helper N is needed.
+            print_debug(f"[GR] Planning Helper {helper_idx}...")
             _, helper_n_policy = and_or_graph_search(
                 helper_n_root,
                 action_sets[helper_idx],
                 disjunctive.is_goal,
                 helper_n_results_fn,
-                iterative_deepening,
-                allow_cyclic,
+                iterative_deepening=iterative_deepening,
+                allow_cyclic=allow_cyclic,
             )
             if helper_n_policy is None:
                 print_debug(f"Helper {helper_idx} failed to find a contingent plan")
@@ -421,11 +454,13 @@ def goal_recognition_agent(
                     current_helper_n_node = HelperNGoalRecognitionNode(
                         current_state.color_filter_multi(top_colors),
                         gr_current,
+                        helper_colors[-1],
                     )
                     results_fns[level.num_agents - 1] = make_helper_n_results(
                         level.num_agents - 1,
                         policies[1],
                         solution_graph_results,
+                        helper_colors[-1],
                     )
 
             # Ensure top helper has coverage (3+ agents)
@@ -435,8 +470,8 @@ def goal_recognition_agent(
                     action_sets[level.num_agents - 1],
                     disjunctive.is_goal,
                     results_fns[level.num_agents - 1],
-                    iterative_deepening,
-                    allow_cyclic,
+                    iterative_deepening=iterative_deepening,
+                    allow_cyclic=allow_cyclic,
                 )
                 if policies[level.num_agents - 1] is None or current_helper_n_node not in policies[level.num_agents - 1]:
                     print_debug(f"Helper {level.num_agents - 1} lost coverage of current state")
@@ -507,7 +542,8 @@ def goal_recognition_agent(
                 if current_helper_n_node is not None and level.num_agents > 2:
                     current_helper_n_node = HelperNGoalRecognitionNode(
                         current_state.color_filter_multi(top_colors),
-                        current_helper_n_node.helper_prev_node
+                        current_helper_n_node.helper_prev_node,
+                        helper_colors[-1],
                     )
 
         pending_indices.remove(chosen_idx)
