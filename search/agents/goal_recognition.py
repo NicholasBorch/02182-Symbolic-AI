@@ -471,9 +471,6 @@ def goal_recognition_agent(
             # Ensure helper 1 has coverage of current GR node
             if gr_current not in policies[1]:
                 _, policies[1] = and_or_graph_search(
-            # Ensure helper 1 has coverage of current GR node
-            if gr_current not in policies[1]:
-                _, policies[1] = and_or_graph_search(
                     gr_current,
                     action_sets[1],
                     action_sets[1],
@@ -542,24 +539,6 @@ def goal_recognition_agent(
                     policies[level.num_agents - 1][current_helper_n_node][level.num_agents - 1]
                 )
                 joint_action = tuple(joint_action_list)
-            if level.num_agents == 2:
-                helper_joint = policies[1][gr_current]
-                joint_action = tuple(
-                    actor_action if i == ACTOR_AGENT_INDEX
-                    else helper_joint[i]
-                    for i in range(level.num_agents)
-                )
-            else:
-                # Each helper's action must come from its own policy; policy[k]'s
-                # joint_action[1] is arbitrary (ignored during physical-state
-                # transitions in make_helper_n_results), so we pull per-helper.
-                joint_action_list = [NoOp()] * level.num_agents
-                joint_action_list[ACTOR_AGENT_INDEX] = actor_action
-                joint_action_list[1] = policies[1][gr_current][1]
-                joint_action_list[level.num_agents - 1] = (
-                    policies[level.num_agents - 1][current_helper_n_node][level.num_agents - 1]
-                )
-                joint_action = tuple(joint_action_list)
 
             successes = send_joint_action(joint_action)
             effective_ja = tuple(
@@ -592,38 +571,7 @@ def goal_recognition_agent(
                             current_helper_n_node = outcomes[idx] if idx < len(outcomes) else outcomes[-1]
                         else:
                             current_helper_n_node = outcomes[0]
-                gr_current = GoalRecognitionNode(
-                    current_state.color_filter_multi(helper1_colors), next_sg
-                )
-                if current_helper_n_node is not None and level.num_agents > 2:
-                    outcomes = results_fns[level.num_agents - 1](current_helper_n_node, joint_action)
-                    if outcomes:
-                        node = current_helper_n_node.helper_prev_node
-                        while isinstance(node, HelperNGoalRecognitionNode):
-                            node = node.helper_prev_node
-                        solution_graph = node.solution_graph
-
-                        percepts = [
-                            action
-                            for action, child in solution_graph.optimal_actions_and_results.items()
-                            if child.consistent_goals
-                        ]
-                        if not percepts:
-                            percepts = [NoOp()]
-                        if actor_action in percepts:
-                            idx = percepts.index(actor_action)
-                            current_helper_n_node = outcomes[idx] if idx < len(outcomes) else outcomes[-1]
-                        else:
-                            current_helper_n_node = outcomes[0]
             else:
-                gr_current = GoalRecognitionNode(
-                    current_state.color_filter_multi(helper1_colors), gr_current.solution_graph
-                )
-                if current_helper_n_node is not None and level.num_agents > 2:
-                    current_helper_n_node = HelperNGoalRecognitionNode(
-                        current_state.color_filter_multi(top_colors),
-                        current_helper_n_node.helper_prev_node,
-                        helper_colors[-1],
-                    )
+                gr_current = GoalRecognitionNode(current_state, gr_current.solution_graph)
 
         pending_indices.remove(chosen_idx)
