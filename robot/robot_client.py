@@ -303,7 +303,7 @@ class RobotClient:
         self.motion.setAngles(["HeadYaw", "HeadPitch"], [
                               yaw, pitch], relative_speed)
 
-    def listen(self, duration: int = 3, channels: list[int] = [0, 0, 1, 0], playback: bool = False) -> None:
+    def listen(self, duration: int = 5, channels: list[int] = [0, 0, 1, 0], playback: bool = False) -> None:
         '''
         Commands the robot to listen for a given duration.
 

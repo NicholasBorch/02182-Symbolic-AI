@@ -20,6 +20,7 @@ from search.agents.goal_recognition import goal_recognition_agent
 from search.agents.non_deterministic import non_deterministic_agent
 from search.agents.non_deterministic_advanced import non_deterministic_advanced_agent
 from search.agents.robot import robot_agent
+from search.agents.robot_goal_recognition import robot_goal_recognition_agent
 
 __all__ = [
     "classic_agent",
@@ -28,4 +29,5 @@ __all__ = [
     "goal_recognition_agent",
     "non_deterministic_agent",
     "robot_agent",
+    "robot_goal_recognition_agent",
 ]

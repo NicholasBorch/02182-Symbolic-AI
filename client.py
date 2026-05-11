@@ -27,7 +27,8 @@ from search.agents import (
     non_deterministic_agent,
     non_deterministic_advanced_agent,
     goal_recognition_agent,
-    robot_agent
+    robot_agent,
+    robot_goal_recognition_agent,
 )
 from search.agents.server_communication import read_line
 from search.domain.actions import DEFAULT_HOSPITAL_ACTION_LIBRARY, ROBOT_ACTION_LIBRARY
@@ -180,6 +181,16 @@ def create_parser():
         "--ip", type=str, required=True, help="IP address of the physical robot"
     )
 
+    # Goal-recognition robot agent subcommand (MAvis3 Exercise 3)
+    robot_goalrec_parser = subparsers.add_parser(
+        "goalrecognition_robot",
+        help="Goal-recognition helper running on Pepper, with the human as actor.",
+        parents=[strategy_parent, and_or_graph_search_parent]
+    )
+    robot_goalrec_parser.add_argument(
+        "--ip", type=str, required=True, help="IP address of the physical robot"
+    )
+
     return parser
 
 
@@ -284,6 +295,13 @@ def main():
             raise ValueError(
                 "IP adress required when using the robot agent type!")
         robot_agent(level, action_library, frontier, robot_ip)
+    elif agent_type_name == "goalrecognition_robot":
+        if not (robot_ip := getattr(args, "ip", None)):
+            raise ValueError(
+                "IP address required when using the goalrecognition_robot agent type!")
+        robot_goal_recognition_agent(
+            level, frontier, robot_ip, enable_iterative_deepening, allow_cyclic
+        )
     else:
         ValueError(f"Unrecognized agent type: {agent_type_name}")
 
