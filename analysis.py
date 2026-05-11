@@ -66,6 +66,17 @@ def load_results(filepath: str) -> pd.DataFrame:
     return df
 
 
+def load_goal_recognition_results(filepath: str) -> pd.DataFrame:
+    """Load results from a goalrecognition run with only the columns that
+    are meaningful for this agent: Level, Solved, Initial AND-OR depth, Time/s, Steps.
+    Drops Strategy, Heuristic and States Generated (the latter is never emitted
+    by the goalrecognition agent)."""
+    df = load_results(filepath)
+    df = df.drop(columns=["Strategy", "Heuristic", "States Generated"])
+    df = df.rename(columns={"Depth": "Initial AND-OR depth"})
+    return df
+
+
 if __name__ == "__main__":
     # for index in [2,3,4]:
         # df = load_results(f"exercise{index}_results.json")
