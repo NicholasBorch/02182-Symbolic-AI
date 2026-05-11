@@ -13,6 +13,8 @@
 from __future__ import annotations
 
 import random
+from typing import Callable, TYPE_CHECKING
+from typing import Callable, TYPE_CHECKING
 
 from search import print_debug
 from search.domain import Level, State, GoalDescription
@@ -22,6 +24,16 @@ from search.algorithms.all_optimal_plans import MultiParentNode, all_optimal_pla
 from search.algorithms.and_or_graph_search import and_or_graph_search
 from search.frontiers.frontier import Frontier
 from search.agents.server_communication import send_joint_action
+
+if TYPE_CHECKING:
+    from typing import TypeAlias
+    HelperPolicy: TypeAlias = dict[State, JointAction]
+    ResultsFunction: TypeAlias = Callable
+
+if TYPE_CHECKING:
+    from typing import TypeAlias
+    HelperPolicy: TypeAlias = dict[State, JointAction]
+    ResultsFunction: TypeAlias = Callable
 
 
 ACTOR_AGENT_INDEX = 0
@@ -115,6 +127,51 @@ class GoalRecognitionNode:
         return hash((self.state, self.solution_graph))
 
 
+class HelperNGoalRecognitionNode:
+    """
+    State for Helper N (N >= 2) planning.
+    State = (physical_state, node_in_helper_(N-1)_plan)
+
+    Helper N branches on the actor's nondeterminism (from solution_graph),
+    and for each actor percept, looks up Helper (N-1)'s action and advances
+    the Helper (N-1) plan node accordingly.
+
+    For hash/eq we only use helper N's own color-filtered positions plus
+    helper_prev_node, because agents 0..N-1's positions are already encoded
+    in helper_prev_node.state. This shrinks the effective state space from
+    O(full_physical_states × policy_states) to O(helper_N_positions × policy_states).
+    """
+
+    def __init__(self, state: State, helper_prev_node: GoalRecognitionNode | HelperNGoalRecognitionNode, helper_color: str) -> None:
+        self.state = state
+        self.helper_prev_node = helper_prev_node
+        self.helper_color = helper_color
+        # Only hash/eq on helper N's own objects + prev node
+        self._key_state = state.color_filter(helper_color)
+
+    def is_applicable(self, joint_action: JointAction) -> bool:
+        return self.state.is_applicable(joint_action)
+
+    def get_applicable_actions(self, helper_index: int, action_set: ActionSet) -> list[Action]:
+        applicable_joint_actions = self.state.get_applicable_actions(action_set)
+        applicable_actions = [
+            joint_action[helper_index] for joint_action in applicable_joint_actions
+        ]
+        return applicable_actions
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            return self._key_state == other._key_state and self.helper_prev_node == other.helper_prev_node
+        else:
+            return False
+
+    def __ne__(self, other) -> bool:
+        return not self.__eq__(other)
+
+    def __hash__(self) -> int:
+        return hash((self._key_state, self.helper_prev_node))
+
+
 def solution_graph_results(
     recognition_node: GoalRecognitionNode, joint_action: JointAction
 ) -> list[GoalRecognitionNode]:
@@ -141,6 +198,116 @@ def solution_graph_results(
     return outcomes
 
 
+def make_helper_n_results(
+    helper_level: int,
+    prev_helper_policy: HelperPolicy,
+    prev_helper_results_fn: ResultsFunction | None = None,
+    helper_color: str = None,
+) -> ResultsFunction:
+    """
+    Factory for creating a results function for Helper N (N >= 2).
+
+    Args:
+        helper_level: Which helper (2, 3, ...)
+        prev_helper_policy: The AND-OR policy for Helper (N-1)
+        prev_helper_results_fn: The results function for Helper (N-1) (None if Helper (N-1) is Helper 1)
+
+    Returns:
+        A results function for Helper N that branches on actor percepts and advances the previous helper's plan
+    """
+    def helper_n_results(state: HelperNGoalRecognitionNode, joint_action: JointAction) -> list[HelperNGoalRecognitionNode]:
+        prev_node = state.helper_prev_node
+
+        if prev_node not in prev_helper_policy:
+            # prev_node is a goal state for helper k-1 (not stored in policy since
+            # AND-OR search only maps non-goal states). This is a dead-end branch
+            # where the filtered world finished early but the full world hasn't yet.
+            return []
+
+        prev_joint = prev_helper_policy[prev_node]
+        num_agents = len(joint_action)
+
+        solution_graph = (
+            prev_node.solution_graph if isinstance(prev_node, GoalRecognitionNode)
+            else prev_node.helper_prev_node.solution_graph
+        )
+
+        percepts = [
+            action
+            for action, child in solution_graph.optimal_actions_and_results.items()
+            if child.consistent_goals
+        ]
+        if not percepts:
+            percepts = [NoOp()]
+
+        if prev_helper_results_fn is None:
+            prev_outcomes = solution_graph_results(prev_node, prev_joint)
+        else:
+            prev_outcomes = prev_helper_results_fn(prev_node, prev_joint)
+
+        if not prev_outcomes:
+            return []
+
+        outcomes = []
+        for idx, actor_action in enumerate(percepts):
+            ja = tuple(
+                actor_action if i == ACTOR_AGENT_INDEX
+                else prev_joint[i] if i < helper_level
+                else joint_action[i] if i == helper_level
+                else NoOp()
+                for i in range(num_agents)
+            )
+
+            # Check applicability in the physical state before applying.
+            # If a previous helper is blocked (e.g., helper1 blocked by helper N),
+            # fall back to applying only the actor + helper N action and keep the
+            # previous helper's plan node unchanged so it retries next time step.
+            if state.state.is_applicable(ja) and not state.state.is_conflicting(ja):
+                new_physical_state = state.state.result(ja)
+                prev_next_node = prev_outcomes[idx] if idx < len(prev_outcomes) else prev_outcomes[-1]
+            else:
+                ja_safe = tuple(
+                    actor_action if i == ACTOR_AGENT_INDEX
+                    else NoOp() if 0 < i < helper_level
+                    else joint_action[i] if i == helper_level
+                    else NoOp()
+                    for i in range(num_agents)
+                )
+                if state.state.is_applicable(ja_safe) and not state.state.is_conflicting(ja_safe):
+                    new_physical_state = state.state.result(ja_safe)
+                else:
+                    new_physical_state = state.state.result(tuple(NoOp() for _ in range(num_agents)))
+                prev_next_node = prev_node
+
+            new_state = HelperNGoalRecognitionNode(new_physical_state, prev_next_node, helper_color)
+            outcomes.append(new_state)
+
+        return outcomes
+
+    return helper_n_results
+
+
+def extract_agent_roles(level: Level) -> tuple[str, list[str]]:
+    """
+    Extract actor color and helper colors from agent positions.
+    Actor is at index 0, helpers are at indices 1, 2, ...
+
+    Returns:
+        (actor_color, helper_colors)
+    """
+    actor_char = level.initial_agent_positions[ACTOR_AGENT_INDEX][1]
+    actor_color = level.colors[actor_char]
+
+    helper_colors = []
+    for helper_idx in range(1, level.num_agents):
+        if helper_idx < len(level.initial_agent_positions):
+            helper_char = level.initial_agent_positions[helper_idx][1]
+            helper_color = level.colors[helper_char]
+            helper_colors.append(helper_color)
+
+    return actor_color, helper_colors
+
+
 def goal_recognition_agent(
     level: Level,
     action_library: ActionLibrary,
@@ -149,23 +316,54 @@ def goal_recognition_agent(
     allow_cyclic: bool = False,
 ):
     """
+    Multi-helper goal recognition agent with recursive planning.
+    Multi-helper goal recognition agent with recursive planning.
 
+    Supports Actor (color 0) and Helpers (colors 1, 2, ...).
+    Each helper plans on top of the previous helper's AND-OR plan.
+    Supports Actor (color 0) and Helpers (colors 1, 2, ...).
+    Each helper plans on top of the previous helper's AND-OR plan.
     """
+    print_debug(f"[GR] Starting goal recognition with {level.num_agents} agents")
+    print_debug(f"[GR] Starting goal recognition with {level.num_agents} agents")
     initial_state = level.initial_state()
     goal_description = level.goal_description()
 
-    actor_char = level.initial_agent_positions[ACTOR_AGENT_INDEX][1]
-    actor_color = level.colors[actor_char]
+    actor_color, helper_colors = extract_agent_roles(level)
+    print_debug(f"[GR] Actor color: {actor_color}, Helper colors: {helper_colors}")
+    actor_color, helper_colors = extract_agent_roles(level)
+    print_debug(f"[GR] Actor color: {actor_color}, Helper colors: {helper_colors}")
     actor_goal = goal_description.color_filter(actor_color)
 
     current_state = initial_state
     pending_indices = list(range(actor_goal.num_sub_goals()))
 
-    action_set: ActionSet = [[NoOp()] for _ in range(level.num_agents)]
-    action_set[HELPER_AGENT_INDEX] = action_library
+    # Per-helper action sets: helper k's search only varies index k.
+    # Using a shared action_set with all helpers = action_library makes
+    # product(*action_set) grow as |action_library|^(num_agents-1), which is
+    # far too large. Each helper's results function only reads joint_action[k],
+    # so other slots must be [NoOp()] to avoid exponential blowup.
+    action_sets: dict[int, ActionSet] = {}
+    for k in range(1, level.num_agents):
+        aset: ActionSet = [[NoOp()] for _ in range(level.num_agents)]
+        aset[k] = action_library
+        action_sets[k] = aset
+    # Per-helper action sets: helper k's search only varies index k.
+    # Using a shared action_set with all helpers = action_library makes
+    # product(*action_set) grow as |action_library|^(num_agents-1), which is
+    # far too large. Each helper's results function only reads joint_action[k],
+    # so other slots must be [NoOp()] to avoid exponential blowup.
+    action_sets: dict[int, ActionSet] = {}
+    for k in range(1, level.num_agents):
+        aset: ActionSet = [[NoOp()] for _ in range(level.num_agents)]
+        aset[k] = action_library
+        action_sets[k] = aset
 
     while pending_indices:
         pending_subgoals = [actor_goal.get_sub_goal(i) for i in pending_indices]
+        print_debug(f"[GR] Planning for subgoals: {pending_indices}")
+        print_debug(f"[GR] Planning for subgoals: {pending_indices}")
+
         chosen_idx = random.choice(pending_indices)
         actor_chosen = actor_goal.get_sub_goal(chosen_idx)
 
@@ -186,39 +384,134 @@ def goal_recognition_agent(
             monochrome_state, [action_library], pending_subgoals, frontier
         )
         assert ok, "All-Optimal-Plans failed to find a solution graph"
+        print_debug(f"[GR] All-Optimal-Plans complete")
+        print_debug(f"[GR] All-Optimal-Plans complete")
 
         disjunctive = DisjunctiveGoalDescription(pending_subgoals)
-        gr_root = GoalRecognitionNode(current_state, root_sg)
 
-        _, policy = and_or_graph_search(
+        # Helper k plans in a state filtered to [actor, helper_1, ..., helper_k].
+        # This way helper 1 ignores orange entities it can't control, and helper 2
+        # then sees the full picture and makes helper 1's plan actually executable.
+        helper1_colors = [actor_color, helper_colors[0]]
+        top_colors = [actor_color] + helper_colors  # all helper colors (for top helper)
+        gr_root = GoalRecognitionNode(current_state.color_filter_multi(helper1_colors), root_sg)
+
+        # Helper k plans in a state filtered to [actor, helper_1, ..., helper_k].
+        # This way helper 1 ignores orange entities it can't control, and helper 2
+        # then sees the full picture and makes helper 1's plan actually executable.
+        helper1_colors = [actor_color, helper_colors[0]]
+        top_colors = [actor_color] + helper_colors  # all helper colors (for top helper)
+        gr_root = GoalRecognitionNode(current_state.color_filter_multi(helper1_colors), root_sg)
+
+        policies = {1: None}
+        results_fns = {1: solution_graph_results}
+
+        print_debug(f"[GR] Planning Helper 1...")
+        _, helper1_policy = and_or_graph_search(
             gr_root,
-            action_set,
+            action_sets[1],
             disjunctive.is_goal,
             solution_graph_results,
             iterative_deepening,
             allow_cyclic,
         )
-        if policy is None:
-            print_debug("Helper failed to find a contingent plan")
+        if helper1_policy is None:
+            print_debug("Helper 1 failed to find a contingent plan")
+        if helper1_policy is None:
+            print_debug("Helper 1 failed to find a contingent plan")
             return
+        print_debug(f"[GR] Helper 1 planning complete, policy size: {len(helper1_policy)}")
+
+        policies[1] = helper1_policy
+        current_root = gr_root
+
+        for helper_idx in range(2, level.num_agents):
+            hcolor = helper_colors[helper_idx - 1]
+            k_colors = [actor_color] + helper_colors[:helper_idx]
+            helper_n_root = HelperNGoalRecognitionNode(
+                current_state.color_filter_multi(k_colors), current_root, hcolor
+            )
+            helper_n_results_fn = make_helper_n_results(
+                helper_idx,
+                policies[helper_idx - 1],
+                results_fns.get(helper_idx - 1),
+                hcolor,
+            )
+            results_fns[helper_idx] = helper_n_results_fn
+
+            # Check if helper (N-1)'s plan is already executable without helper N
+            # by testing whether helper_n_root is immediately a goal or already covered.
+            # If helper N-1 reached a success without needing helper N's help, skip.
+            # Full check: run AND-OR from helper_n_root; if it fails, helper N is needed.
+            print_debug(f"[GR] Planning Helper {helper_idx}...")
+            _, helper_n_policy = and_or_graph_search(
+                helper_n_root,
+                action_sets[helper_idx],
+                disjunctive.is_goal,
+                helper_n_results_fn,
+                iterative_deepening=iterative_deepening,
+                allow_cyclic=allow_cyclic,
+            )
+            if helper_n_policy is None:
+                print_debug(f"Helper {helper_idx} failed to find a contingent plan")
+                return
+            print_debug(f"[GR] Helper {helper_idx} planning complete, policy size: {len(helper_n_policy)}")
+
+            policies[helper_idx] = helper_n_policy
+            current_root = helper_n_root
+
+        print_debug(f"[GR] All helpers planned, starting execution...")
 
         gr_current = gr_root
+        current_helper_n_node = current_root if level.num_agents > 2 else None
+
+        current_helper_n_node = current_root if level.num_agents > 2 else None
+
         while not actor_chosen.is_goal(current_state):
-            if gr_current not in policy:
-                _, policy = and_or_graph_search(
+            # Ensure helper 1 has coverage of current GR node
+            if gr_current not in policies[1]:
+                _, policies[1] = and_or_graph_search(
                     gr_current,
-                    action_set,
+                    action_sets[1],
+                    action_sets[1],
                     disjunctive.is_goal,
                     solution_graph_results,
                     iterative_deepening,
                     allow_cyclic,
                 )
-                if policy is None or gr_current not in policy:
-                    print_debug("Helper lost coverage of current state")
+                if policies[1] is None or gr_current not in policies[1]:
+                    print_debug("Helper 1 lost coverage of current state")
                     return
+                if level.num_agents > 2:
+                    # Reset current_helper_n_node with the fresh gr_current as its
+                    # helper_prev_node. The old node's prev pointed to a stale gr_current
+                    # that is no longer in the new policies[1], causing every subsequent
+                    # helper_n_results call to fail ("not in policy") during replan.
+                    current_helper_n_node = HelperNGoalRecognitionNode(
+                        current_state.color_filter_multi(top_colors),
+                        gr_current,
+                        helper_colors[-1],
+                    )
+                    results_fns[level.num_agents - 1] = make_helper_n_results(
+                        level.num_agents - 1,
+                        policies[1],
+                        solution_graph_results,
+                        helper_colors[-1],
+                    )
 
-            helper_joint = policy[gr_current]
-            helper_action = helper_joint[HELPER_AGENT_INDEX]
+            # Ensure top helper has coverage (3+ agents)
+            if level.num_agents > 2 and current_helper_n_node not in policies[level.num_agents - 1]:
+                _, policies[level.num_agents - 1] = and_or_graph_search(
+                    current_helper_n_node,
+                    action_sets[level.num_agents - 1],
+                    disjunctive.is_goal,
+                    results_fns[level.num_agents - 1],
+                    iterative_deepening=iterative_deepening,
+                    allow_cyclic=allow_cyclic,
+                )
+                if policies[level.num_agents - 1] is None or current_helper_n_node not in policies[level.num_agents - 1]:
+                    print_debug(f"Helper {level.num_agents - 1} lost coverage of current state")
+                    return
 
             choices = gr_current.solution_graph.get_actions_and_results_consistent_with_goal(
                 actor_chosen
@@ -228,12 +521,24 @@ def goal_recognition_agent(
             else:
                 actor_action, next_sg = NoOp(), gr_current.solution_graph
 
-            joint_action = tuple(
-                actor_action if i == ACTOR_AGENT_INDEX
-                else helper_action if i == HELPER_AGENT_INDEX
-                else NoOp()
-                for i in range(level.num_agents)
-            )
+            if level.num_agents == 2:
+                helper_joint = policies[1][gr_current]
+                joint_action = tuple(
+                    actor_action if i == ACTOR_AGENT_INDEX
+                    else helper_joint[i]
+                    for i in range(level.num_agents)
+                )
+            else:
+                # Each helper's action must come from its own policy; policy[k]'s
+                # joint_action[1] is arbitrary (ignored during physical-state
+                # transitions in make_helper_n_results), so we pull per-helper.
+                joint_action_list = [NoOp()] * level.num_agents
+                joint_action_list[ACTOR_AGENT_INDEX] = actor_action
+                joint_action_list[1] = policies[1][gr_current][1]
+                joint_action_list[level.num_agents - 1] = (
+                    policies[level.num_agents - 1][current_helper_n_node][level.num_agents - 1]
+                )
+                joint_action = tuple(joint_action_list)
 
             successes = send_joint_action(joint_action)
             effective_ja = tuple(
@@ -243,7 +548,29 @@ def goal_recognition_agent(
             current_state = current_state.result(effective_ja)
 
             if successes[ACTOR_AGENT_INDEX]:
-                gr_current = GoalRecognitionNode(current_state, next_sg)
+                gr_current = GoalRecognitionNode(
+                    current_state.color_filter_multi(helper1_colors), next_sg
+                )
+                if current_helper_n_node is not None and level.num_agents > 2:
+                    outcomes = results_fns[level.num_agents - 1](current_helper_n_node, joint_action)
+                    if outcomes:
+                        node = current_helper_n_node.helper_prev_node
+                        while isinstance(node, HelperNGoalRecognitionNode):
+                            node = node.helper_prev_node
+                        solution_graph = node.solution_graph
+
+                        percepts = [
+                            action
+                            for action, child in solution_graph.optimal_actions_and_results.items()
+                            if child.consistent_goals
+                        ]
+                        if not percepts:
+                            percepts = [NoOp()]
+                        if actor_action in percepts:
+                            idx = percepts.index(actor_action)
+                            current_helper_n_node = outcomes[idx] if idx < len(outcomes) else outcomes[-1]
+                        else:
+                            current_helper_n_node = outcomes[0]
             else:
                 gr_current = GoalRecognitionNode(current_state, gr_current.solution_graph)
 

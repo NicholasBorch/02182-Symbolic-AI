@@ -208,6 +208,28 @@ class State:
             self.level, filtered_agent_positions, filtered_box_positions
         )
 
+    def color_filter_multi(self, colors: list[str]):
+        """
+        Returns a copy of the current state keeping only entities whose color is in `colors`.
+        Agents of other colors are replaced with ("", "") placeholders so that joint-action
+        indices remain stable (is_conflicting already skips placeholders via the [1]=="" guard).
+        Boxes of other colors are dropped entirely.
+        """
+        filtered_agent_positions = []
+        for agent_position, agent_char in self.agent_positions:
+            if self.level.colors[agent_char] in colors:
+                filtered_agent_positions.append((agent_position, agent_char))
+            else:
+                filtered_agent_positions.append(("", ""))
+
+        filtered_box_positions = [
+            (box_position, box_char)
+            for box_position, box_char in self.box_positions
+            if self.level.colors[box_char] in colors
+        ]
+
+        return State(self.level, filtered_agent_positions, filtered_box_positions)
+
     def __repr__(self) -> str:
         lines = []
         lookup_table = {}
