@@ -19,8 +19,20 @@ from search.agents.helper import helper_agent
 from search.agents.goal_recognition import goal_recognition_agent
 from search.agents.non_deterministic import non_deterministic_agent
 from search.agents.non_deterministic_advanced import non_deterministic_advanced_agent
-from search.agents.robot import robot_agent
-from search.agents.robot_goal_recognition import robot_goal_recognition_agent
+
+try:
+    from search.agents.robot import robot_agent
+    from search.agents.robot_goal_recognition import robot_goal_recognition_agent
+except ImportError as _robot_import_err:
+    def _make_unavailable(name, err):
+        def _stub(*args, **kwargs):
+            raise RuntimeError(
+                f"{name} is unavailable because robot dependencies are not installed "
+                f"(original error: {err}). This agent is not needed for non-robot exercises."
+            )
+        return _stub
+    robot_agent = _make_unavailable("robot_agent", _robot_import_err)
+    robot_goal_recognition_agent = _make_unavailable("robot_goal_recognition_agent", _robot_import_err)
 
 __all__ = [
     "classic_agent",
